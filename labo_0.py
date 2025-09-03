@@ -102,5 +102,46 @@ def numeroAureo(n):
 def matrizFibonacci(n):
     array_v = [[0] * n for _ in range(len(n))]
     array_v[0][1] = 1
+    #TODO
 
+def matrizHilbert(n):
+    array_v = [[0] * n for _ in range(len(n))]
+    for x in range(n):
+        for y in range(n):
+            array_v[x][y] = 1/(x+y+1)
+    return np.assarray(array_v)
+
+def row_echelon(M:Matriz):
+    """ 
+        Retorna la Matriz Escalonada por Filas 
+    """
+    A:Matriz = np.copy(M)
+    if (issubclass(A.dtype.type, np.integer)):
+        A = A.astype(float)
+    # Si A no tiene filas o columnas, ya esta escalonada
+    f, c = A.shape
+    if f == 0 or c == 0:
+        return A
+    # buscamos primer elemento no nulo de la primera columna
+    # NOTE: El univo Cambio Que hicimos aca fue en vez de agarrar 0 conseguimos la fila cuyo elemento en la columna 0 tuviese mayor modulo
+    i = np.argmax(np.abs(A[:,0]))
+    while i < f and A[i,0] == 0:
+        i += 1
+    if i == f:
+        # si todos los elementos de la primera columna son ceros
+        # escalonamos filas desde la segunda columna
+        B = row_echelon(A[:,1:])
+        # y volvemos a agregar la primera columna de zeros
+        return np.block([A[:,:1], B])
+    # intercambiamos filas i <-> 0, pues el primer cero aparece en la fila i
+    if i > 0:
+        A[[0,i],:] = A[[i,0],:]
+    # PASO DE TRIANGULACION GAUSSIANA:
+    # a las filas subsiguientes les restamos un multiplo de la primera
+    A[1:,:] -= (A[0,:] / A[0,0]) * A[1:,0:1]
+    # escalonamos desde la segunda fila y segunda columna en adelante
+    B = row_echelon(A[1:,1:])
+    # reconstruimos la matriz por bloques adosando a B la primera fila 
+    # y la primera columna (de ceros)
+    return np.block([ [A[:1,:]], [ A[1:,:1], B] ])
 main()
