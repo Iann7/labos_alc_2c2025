@@ -26,4 +26,26 @@ def func_a(x):
 def func_b(x):
     return 2*x**2/(np.sqrt(2*x**2+1)+1)
     
+def error(x,y):
+    return np.abs(x-y)
+    #Recibe dos numeros x e y, y calcula el error de aproximar x usando y en float64
+
+def error_relativo(x,y):
+    return np.abs(x-y/x)
+    #Recibe dos numeros x e y, y calcula el error relativo de aproximar x usando y en float64
+    
+def matricesIguales(A:Matriz,B:Matriz):
+    #Devuelve True si ambas matrices son iguales y False en otro caso.
+    #Considerar que las matrices pueden tener distintas dimensiones, ademas de distintos valores.
+    if A.shape != B.shape: return False
+    for x in range(A.shape[0]):
+        for y in range(A.shape[1]):
+            if A[x][y] != B[x][y]:
+                return False
+    return True  
+    
+    
+    
+    
+    
 main()

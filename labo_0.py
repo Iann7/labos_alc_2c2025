@@ -104,6 +104,10 @@ def matrizFibonacci(n):
     array_v[0][1] = 1
     #TODO
 
+def calcular_polinomio():
+    #TODO
+    return
+
 def matrizHilbert(n):
     array_v = [[0] * n for _ in range(len(n))]
     for x in range(n):
