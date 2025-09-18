@@ -84,23 +84,25 @@ def escala(s:Matriz):
     s_escalada = generarArrayCuadradoNulo2D(n)
     for x in range(n):
             s_escalada[x][x] = s[x]
-    return s_escalada 
+    return np.asarray(s_escalada) 
 def rota_y_escala(theta,s:Matriz):
     matriz_rotacion = rota(theta)
     matriz_escalada = escala(s)
-    columna_1 = labo_0.calcularAx(matriz_rotacion,matriz_escalada[0])
-    columna_2 = labo_0.calcularAx(matriz_rotacion,matriz_escalada[1])
+    columna_1:Matriz = labo_0.calcularAx(matriz_rotacion,matriz_escalada[0])
+    columna_2:Matriz = labo_0.calcularAx(matriz_rotacion,matriz_escalada[1])
+    matriz_mas_columnas_vacias = np.column_stack([columna_1,columna_2,np.asarray([[0],[0]])])
+    return np.vstack([matriz_mas_columnas_vacias,np.array([0,0,1])])
 def afin(theta,s,b):
     #Recibe un angulo theta una tira de numeros s en R2 y un vector b en R2
     #Retorna una matriz de 3x3 que rota el vector en un angulo theta 
     #luego lo escala en un factor s y por ultimo lo mueve en un valor fijo b
     rotada_y_escalada = rota_y_escala(theta,s)
-    translacion = np.asarray([[]])
-    return 
+    rotada_y_escalada[0][2] = b[0]
+    rotada_y_escalada[1][2] = b[1]
+    return rotada_y_escalada
 
-def trans_afin(theta,s,b):
-
-    return 
+def trans_afin(v,theta,s,b):
+    return labo_0.calcularAx(afin(theta,s,b),v) 
 
 
 #Test para rota 
@@ -119,3 +121,34 @@ assert np.allclose(rota_y_escala(0, [2, 3]),np.array([[2, 0, 0], [0, 3, 0], [0, 
 assert np.allclose(rota_y_escala(np.pi / 2, [1, 1]),np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]]))
 
 assert np.allclose(rota_y_escala(np.pi, [2, 2]),np.array([[-2, 0, 0], [0, -2, 0], [0, 0, 1]]))
+# Tests para la función afin
+import numpy as np
+
+assert np.allclose(
+    afin(0, [1, 1], [1, 2]),
+    np.array([
+        [1, 0, 1],
+        [0, 1, 2],
+        [0, 0, 1]
+    ])
+)
+
+assert np.allclose(
+    afin(np.pi / 2, [1, 1], [0, 0]),
+    np.array([
+        [0, -1, 0],
+        [1,  0, 0],
+        [0,  0, 1]
+    ])
+)
+
+assert np.allclose(
+    afin(0, [2, 3], [1, 1]),
+    np.array([
+        [2, 0, 1],
+        [0, 3, 1],
+        [0, 0, 1]
+    ])
+)
+print("funciona todo")
+

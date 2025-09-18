@@ -53,7 +53,8 @@ def traspuesta(matriz:Matriz):
 def calcularAx(A:Matriz,x:Matriz):
     n,m = A.shape
     resultado_ax = [0] * n
-    assert x.shape[0]==m and x.shape[1]==1 , "el vector x tiene que ser del tamaño de #columnas_de_A x 1"
+    print(x.shape)
+    assert x.shape==(m,1) or x.shape == (m,) , "el vector x tiene que ser del tamaño de #columnas_de_A x 1"
     for i in range(n):
         for j in range(m):
             resultado_ax[i] += A[i][j]*x[j]
