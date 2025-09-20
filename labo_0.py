@@ -53,7 +53,6 @@ def traspuesta(matriz:Matriz):
 def calcularAx(A:Matriz,x:Matriz):
     n,m = A.shape
     resultado_ax = [0] * n
-    print(x.shape)
     assert x.shape==(m,1) or x.shape == (m,) , "el vector x tiene que ser del tamaño de #columnas_de_A x 1"
     for i in range(n):
         for j in range(m):
@@ -149,4 +148,3 @@ def row_echelon(M:Matriz):
     # reconstruimos la matriz por bloques adosando a B la primera fila 
     # y la primera columna (de ceros)
     return np.block([ [A[:1,:]], [ A[1:,:1], B] ])
-main()
