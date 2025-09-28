@@ -32,7 +32,7 @@ def trianguloInferior(matriz:Matriz):
      
 
 def diagonal(matriz:Matriz):
-    return celdasACeroSi(matriz,lambda x,y:y!=x)
+    return celdasACeroSi(matriz.copy(),lambda x,y:y!=x)
      
 
 def traza(matriz:Matriz):
