@@ -32,7 +32,7 @@ def trianguloInferior(matriz:Matriz):
      
 
 def diagonal(matriz:Matriz):
-    return celdasACeroSi(matriz.copy(),lambda x,y:y!=x)
+    return celdasACeroSi(matriz,lambda x,y:y!=x)
      
 
 def traza(matriz:Matriz):
@@ -43,6 +43,7 @@ def traza(matriz:Matriz):
     return suma
 
 def traspuesta(matriz:Matriz):
+    matriz = np.atleast_2d(matriz)
     fila,columna = matriz.shape
     array_transpuesto = [[0] * fila for _ in range(columna)]
     for x in range(fila):
@@ -51,6 +52,7 @@ def traspuesta(matriz:Matriz):
     return np.asarray(array_transpuesto)
 
 def calcularAx(A:Matriz,x:Matriz):
+    A = np.atleast_2d(A)
     n,m = A.shape
     resultado_ax = [0] * n
     assert x.shape==(m,1) or x.shape == (m,) , "el vector x tiene que ser del tamaño de #columnas_de_A x 1"
