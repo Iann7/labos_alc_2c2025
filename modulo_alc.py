@@ -698,7 +698,7 @@ def svd_reducida_v2(A, tol=1e-15):
         n,m = A.shape
         A_t = traspuesta(A)
         Aprima = None 
-        if n > m:
+        if n >= m:
             Aprima = productoMatricial(A_t, A) # A^t * A
         else:
             Aprima = productoMatricial(A, A_t) # A * A^t
@@ -707,22 +707,36 @@ def svd_reducida_v2(A, tol=1e-15):
         Sigma = np.sqrt(Lambda)
         #U_i = A*V_i / sigma_i
         #A*V_i = sigma_i * V_i
+
+
         r=0
         for i in range(n):
             r=i
             if allclose(Sigma[i, i], 0, tol):
                 break
-        
+
+        r = r+1
         Sigma = Sigma[:r, :r]
         V = V[:, :r]
         U = np.zeros((n,r))
-        for i in range(r):
-            U[:,i] = calcularAx(A, V[:, i]) * (1 / Sigma[i, i])
+        B = productoMatricial(A, V)
+        U = traspuesta(np.array(normaliza(traspuesta(B),p=2)))
+
+        # for i in range(r):
+        #     U[:,i] = calcularAx(A, V[:, i]) * (1 / Sigma[i, i])
         
-        if n > m:
-            return U, Sigma, traspuesta(V)
+        # for i in range(r): 
+        #     vectorV = U[:,i]
+        #     normaVecV = norma(vectorV, 2)
+        #     b = normaVecV
+
+        # Q, R = QR_con_GS(U)
+        # U = Q
+
+        if n >= m:
+            return U, Sigma, V
         else:
-            return V, Sigma, traspuesta(U)
+            return V, Sigma, U
 
 def svd_reducida(A,k="max",tol=1e-15):
         """
@@ -731,40 +745,10 @@ def svd_reducida(A,k="max",tol=1e-15):
         tol la tolerancia para considerar un valor singular igual a cero
         Retorna hatU (matriz de m x k), hatSig (vector de k valores singulares) y hatV (matriz de n x k)
         """
-        n,m = A.shape
-        A_t = traspuesta(A)
-        
-
-        # iii 
-        Aprima = None
-        if n > m:
-            Aprima = productoMatricial(A_t, A) # A^t * A
-        else:
-            Aprima = productoMatricial(A, A_t) # A * A^t
-
-        # hola
-        #???
-        V,Landa = diagRH(Aprima, tol, 1000)
-        autovalores_positivos = []
-        np.sqrt()
-        for i in range(Landa.shape[0]):
-            val = np.sqrt(Landa[i][i])
-            if val>tol:
-                autovalores_positivos.append((val,i))
-        autovalores_positivos.sort(key=lambda x:-x[0])
-        if k!="max":
-            autovalores_positivos = autovalores_positivos[:k]
-        r = len(autovalores_positivos)
-        sigma_casita = np.zeros((r,1))
-        v_casita = np.zeros((m,r))
-        #enumerate= le agrega un contador a la lista que tenemos
-        #en este caso seria j 
-        for j,(s,idx) in enumerate(autovalores_positivos):
-            sigma_casita[j] = s
-            v_casita[:,j] = V[:,idx]         
-        AV = productoMatricial(A,v_casita)
-        B = normaliza(AV,2)
-        raise NotImplementedError("Implementar svd_reducida!")
+        U, Sigma, V = svd_reducida_v2(A, tol)
+        if k == "max":
+            k = Sigma.shape[0]
+        return U[:, :k], np.diagonal(Sigma[:k, :k]), V[:, :k]
 
 # endregion
 
@@ -1293,7 +1277,7 @@ def tests7():
     v = np.random.random(5)
     assert np.allclose(multiplica_rala_vector(A_rala,v), A @ v)
 
-def test8():
+def tests8():
     # Tests L08    
     # Matrices al azar
     def genera_matriz_para_test(m,n=2,tam_nucleo=0):
@@ -1309,6 +1293,7 @@ def test8():
         hU,hS,hV = svd_reducida(A,tol=tol)
         nU,nS,nVT = np.linalg.svd(A)
         r = len(hS)+1
+        #k el numero de valores singulares (y vectores) a retener.
         assert np.all(np.abs(np.abs(np.diag(hU.T @ nU))-1)<10**r*tol), 'Revisar calculo de hat U en ' + str((m,n))
         assert np.all(np.abs(np.abs(np.diag(nVT @ hV))-1)<10**r*tol), 'Revisar calculo de hat V en ' + str((m,n))
         assert len(hS) == len(nS[np.abs(nS)>tol]), 'Hay cantidades distintas de valores singulares en ' + str((m,n))
@@ -1341,20 +1326,22 @@ def test8():
 
 
 def main():
-    #print('Ejecutando tests labo 1')
+    print('Ejecutando tests labo 1')
     #tests1()
-    #print('Ejecutando tests labo 2')
+    print('Ejecutando tests labo 2')
     #tests2()
-    #print('Ejecutando tests labo 3')
+    print('Ejecutando tests labo 3')
     #tests3()
     print('Ejecutando tests labo 4')
     tests4()
-    #print('Ejecutando tests labo 5')
+    print('Ejecutando tests labo 5')
     #tests5()
     print('Ejecutando tests labo 6')
-    tests6()
+    # tests6()
     print('Ejecutando tests labo 7')
-    tests7()
+    # tests7()
+    print('Ejecutando tests labo 8')
+    tests8()
     print('Pasaron todos los tests')
 
 if __name__ == "__main__":
