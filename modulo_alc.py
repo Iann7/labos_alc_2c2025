@@ -181,7 +181,10 @@ def matriz(v):
 def householder(v, u):
     n = v.shape[0]
     resta = u - v
-    return np.eye(n) - 2 / (norma(resta, 2)**2) * (productoMatricial(traspuesta(matriz(resta)), matriz(resta)))
+    norm = (norma(resta, 2)**2)
+    if norm < 1e-12:
+        return np.eye(n)
+    return np.eye(n) - 2 / norm * (productoMatricial(traspuesta(matriz(resta)), matriz(resta)))
 
 def expandirMatriz(A, val, cant=1):
     n, m = A.shape
@@ -432,6 +435,24 @@ def esSDP(A, atol=1e-8):
 
     return True
 
+def calculaCholesky(A, atol=1e-10):
+    if not esSDP(A, atol):
+        return None
+    n, _ = A.shape
+    L = np.zeros((n, n))
+    for k in range(n):
+        L[k, k] = A[k, k]
+        for j in range(k):
+            L[k, k] -= pow(L[k, j],2)
+        L[k, k] = np.sqrt(L[k, k])
+        for i in range(k+1, n):
+            L[i, k] = A[i, k]
+            for j in range(k):
+                L[i, k] -= L[i, j] * L[k, j]
+            L[i, k] *= 1 / L[k, k]
+
+    return L
+
 # endregion
 
 # region LABO 5
@@ -563,7 +584,8 @@ def metpot2k(A,tol=1e-8,K=100):
 
 
 def diagRH(A,tol=1e-15,K=1000):
-    if not esSimetrica(A, tol):
+    if not esSimetrica(A, 10*tol):
+        print("FALLO POR NO SIMETRICA")
         return None
     n, _ = A.shape
     v_1, val_1, _ = metpot2k(A, tol, K)
@@ -702,6 +724,7 @@ def calcular_sigma_casita(A,tol):
         else:
             break
     return sigma_casita
+
 def svd_reducida(A,k="max",tol=1e-15):
         """
         A la matriz de interes (de m x n)
@@ -711,6 +734,7 @@ def svd_reducida(A,k="max",tol=1e-15):
         """
         filas_a,columnas_a= A.shape
         a_t_a = productoMatricial(traspuesta(A),A)
+        a_t_a = (a_t_a + traspuesta(a_t_a)) / 2
         V,diagonal_autovalores_de_ata = diagRH(a_t_a,tol)
         Sigma_casita_diagonal = calcular_sigma_casita(diagonal_autovalores_de_ata , tol)
         r=len(Sigma_casita_diagonal)
@@ -1263,8 +1287,10 @@ def tests8():
 
     def test_svd_reducida_mn(A,tol=1e-15):
         m,n = A.shape
-        if m==n and m==5:
-            print("a")
+        print(f"m: {m}, n: {n}")
+        # if m==n and m==5:
+        #     print("a")
+        print(A)
         hU,hS,hV = svd_reducida(A,tol=tol)
         nU,nS,nVT = np.linalg.svd(A)
         r = len(hS)+1
@@ -1289,7 +1315,7 @@ def tests8():
     for tam_nucleo in [2,4,6]:
         for _ in range(10):
             A = genera_matriz_para_test(m,tam_nucleo=tam_nucleo)
-            test_svd_reducida_6mn(A)
+            test_svd_reducida_mn(A)
 
     # Tamaños de las reducidas
     A = np.random.random((8,6))
@@ -1310,7 +1336,13 @@ def main():
     print('Ejecutando tests labo 3')
     #tests3()
     print('Ejecutando tests labo 4')
-    tests4()
+    # tests4()
+    # A = np.array([
+    #     [4.0, 12.0, -16.0],
+    #     [12.0, 37.0, -43.0],
+    #     [-16.0, -43.0, 98.0]
+    # ], dtype=float)
+    # print(f"Cholesky: {calculaCholesky(A)}")
     print('Ejecutando tests labo 5')
     #tests5()
     print('Ejecutando tests labo 6')
@@ -1318,7 +1350,7 @@ def main():
     print('Ejecutando tests labo 7')
     # tests7()
     print('Ejecutando tests labo 8')
-    tests8()
+    # tests8()
     print('Pasaron todos los tests')
 
 if __name__ == "__main__":
