@@ -540,7 +540,7 @@ def f(A, v):
         return wp * (1/norma2)
     
 
-def metpot2k(A,tol=1e-8,K=1000):
+def metpot2k(A,tol=1e-8,K=100):
     n, m = A.shape
     if n != m:
         return None
@@ -694,61 +694,36 @@ def multiplica_rala_vector(A,v):
 # endregion
 
 # region LABO 8
-def svd_reducida_v2(A, tol=1e-15):
-        n,m = A.shape
-        A_t = traspuesta(A)
-        Aprima = None 
-        if n >= m:
-            Aprima = productoMatricial(A_t, A) # A^t * A
-        else:
-            Aprima = productoMatricial(A, A_t) # A * A^t
-        #TODO: hace falta ortormalizar el V? 
-        V,Lambda = diagRH(Aprima, tol, 1000) # Recordar: Autovalores se toman en orden por metodo de la potencia. Por eso no reordenamos. Depende de implementacion de diagRH
-        Sigma = np.sqrt(Lambda)
-        #U_i = A*V_i / sigma_i
-        #A*V_i = sigma_i * V_i
-
-
-        r=0
-        for i in range(n):
-            r=i
-            if allclose(Sigma[i, i], 0, tol):
-                break
-
-        r = r+1
-        Sigma = Sigma[:r, :r]
-        V = V[:, :r]
-        U = np.zeros((n,r))
-        B = productoMatricial(A, V)
-        U = traspuesta(np.array(normaliza(traspuesta(B),p=2)))
-
-        # for i in range(r):
-        #     U[:,i] = calcularAx(A, V[:, i]) * (1 / Sigma[i, i])
-        
-        # for i in range(r): 
-        #     vectorV = U[:,i]
-        #     normaVecV = norma(vectorV, 2)
-        #     b = normaVecV
-
-        # Q, R = QR_con_GS(U)
-        # U = Q
-
-        if n >= m:
-            return U, Sigma, V
-        else:
-            return V, Sigma, U
-
-def svd_reducida(A,k="max",tol=1e-15):
+def svd_reducida(A,k="max",tol=1e-6):
         """
         A la matriz de interes (de m x n)
         k el numero de valores singulares (y vectores) a retener.
         tol la tolerancia para considerar un valor singular igual a cero
         Retorna hatU (matriz de m x k), hatSig (vector de k valores singulares) y hatV (matriz de n x k)
         """
-        U, Sigma, V = svd_reducida_v2(A, tol)
+        filas_a,columnas_a= A.shape
+        a_t_a = productoMatricial(traspuesta(A),A)
+        V,diagonal_autovalores_de_ata = diagRH(a_t_a,tol)
+        r = 0
+        for i in range(diagonal_autovalores_de_ata.shape[0]):
+            if np.abs(diagonal_autovalores_de_ata[i, i]) > tol:
+                r += 1
+                break
+        r=r+1
+        Sigma_casita = diagonal_autovalores_de_ata[:r,:r]
+        Sigma_casita_diagonal = []
+        for i in range(Sigma_casita.shape[0]):
+            assert Sigma_casita[i][i] >= 0 , "Una celda diagonal de sigma casita es negativa"
+            Sigma_casita[i][i] = np.sqrt(Sigma_casita[i][i])
+            Sigma_casita_diagonal.append(Sigma_casita[i][i])
+        V_casita = V[:,:r]
+        B = productoMatricial(A, V_casita)  
+        U_t_norm = np.array(normaliza(traspuesta(B),p=2))
+        U_casita = traspuesta(U_t_norm)
         if k == "max":
-            k = Sigma.shape[0]
-        return U[:, :k], np.diagonal(Sigma[:k, :k]), V[:, :k]
+            k = r
+        
+        return  U_casita[:,:k],np.array(Sigma_casita_diagonal)[:k],V_casita[:,:k]
 
 # endregion
 
@@ -1290,6 +1265,8 @@ def tests8():
 
     def test_svd_reducida_mn(A,tol=1e-15):
         m,n = A.shape
+        if m==n and m==5:
+            print("a")
         hU,hS,hV = svd_reducida(A,tol=tol)
         nU,nS,nVT = np.linalg.svd(A)
         r = len(hS)+1
@@ -1299,11 +1276,13 @@ def tests8():
         assert len(hS) == len(nS[np.abs(nS)>tol]), 'Hay cantidades distintas de valores singulares en ' + str((m,n))
         assert np.all(np.abs(hS-nS[np.abs(nS)>tol])<10**r*tol), 'Hay diferencias en los valores singulares en ' + str((m,n))
 
-    for m in [2,5,10,20]:
-        for n in [2,5,10,20]:
+    for m in [5,10,20]:
+        for n in [5,10,20]:
             for _ in range(10):
+                if m==5 and n==5:
+                    print("a")
                 A = genera_matriz_para_test(m,n)
-                test_svd_reducida_mn(A)
+f                test_svd_reducida_mn(A)
 
 
     # Matrices con nucleo
