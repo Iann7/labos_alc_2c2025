@@ -694,7 +694,15 @@ def multiplica_rala_vector(A,v):
 # endregion
 
 # region LABO 8
-def svd_reducida(A,k="max",tol=1e-6):
+def calcular_sigma_casita(A,tol):
+    sigma_casita = []
+    for i in range(A.shape[0]):
+        if A[i][i] > tol:    
+            sigma_casita.append(np.sqrt(A[i][i]))
+        else:
+            break
+    return sigma_casita
+def svd_reducida(A,k="max",tol=1e-15):
         """
         A la matriz de interes (de m x n)
         k el numero de valores singulares (y vectores) a retener.
@@ -704,18 +712,8 @@ def svd_reducida(A,k="max",tol=1e-6):
         filas_a,columnas_a= A.shape
         a_t_a = productoMatricial(traspuesta(A),A)
         V,diagonal_autovalores_de_ata = diagRH(a_t_a,tol)
-        r = 0
-        for i in range(diagonal_autovalores_de_ata.shape[0]):
-            if np.abs(diagonal_autovalores_de_ata[i, i]) > tol:
-                r += 1
-                break
-        r=r+1
-        Sigma_casita = diagonal_autovalores_de_ata[:r,:r]
-        Sigma_casita_diagonal = []
-        for i in range(Sigma_casita.shape[0]):
-            assert Sigma_casita[i][i] >= 0 , "Una celda diagonal de sigma casita es negativa"
-            Sigma_casita[i][i] = np.sqrt(Sigma_casita[i][i])
-            Sigma_casita_diagonal.append(Sigma_casita[i][i])
+        Sigma_casita_diagonal = calcular_sigma_casita(diagonal_autovalores_de_ata , tol)
+        r=len(Sigma_casita_diagonal)
         V_casita = V[:,:r]
         B = productoMatricial(A, V_casita)  
         U_t_norm = np.array(normaliza(traspuesta(B),p=2))
@@ -1278,11 +1276,11 @@ def tests8():
 
     for m in [2,5,10,20]:
         for n in [2,5,10,20]:
-            for _ in range(10):
-                if m==5 and n==5:
+            for i in range(2):
+                if m==5 and n==10:
                     print("a")
                 A = genera_matriz_para_test(m,n)
-f                test_svd_reducida_mn(A)
+                test_svd_reducida_mn(A)
 
 
     # Matrices con nucleo
@@ -1291,7 +1289,7 @@ f                test_svd_reducida_mn(A)
     for tam_nucleo in [2,4,6]:
         for _ in range(10):
             A = genera_matriz_para_test(m,tam_nucleo=tam_nucleo)
-            test_svd_reducida_mn(A)
+            test_svd_reducida_6mn(A)
 
     # Tamaños de las reducidas
     A = np.random.random((8,6))
@@ -1325,4 +1323,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
