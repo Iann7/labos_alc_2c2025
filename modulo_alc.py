@@ -1276,8 +1276,8 @@ def tests8():
         assert len(hS) == len(nS[np.abs(nS)>tol]), 'Hay cantidades distintas de valores singulares en ' + str((m,n))
         assert np.all(np.abs(hS-nS[np.abs(nS)>tol])<10**r*tol), 'Hay diferencias en los valores singulares en ' + str((m,n))
 
-    for m in [5,10,20]:
-        for n in [5,10,20]:
+    for m in [2,5,10,20]:
+        for n in [2,5,10,20]:
             for _ in range(10):
                 if m==5 and n==5:
                     print("a")
@@ -1325,3 +1325,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
