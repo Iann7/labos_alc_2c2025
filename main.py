@@ -1,19 +1,40 @@
 import numpy as np
-#import modulo_alc
+import modulo_alc
 path_base = "./cats_and_dogs"
 
 def main():
     X_t, Y_t, X_v, Y_v = cargarDataset(path_base)
-    ecuaciones_normales()
-    descomposicion_qr()
+    W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)
+    W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
+    W_QR = fullyConnectedLineal_QR(X_t, Y_t)
+
+    print(f"W_QR: {W_QR}")
 
     return 
 
-def ecuaciones_normales():
-    return 
+def fullyConnectedLineal_Cholesky(X, Y):
+    return None
 
-def descomposicion_qr():
-    return 
+def fullyConnectedLineal_SVD(X, Y):
+    return None
+
+def fullyConnectedLineal_QR(X, Y):
+    # print(X)
+    X = X[:,:10]
+    Y = Y[:,:10]
+    Q, R = modulo_alc.calculaQR(modulo_alc.traspuesta(X))
+    # print(Q)
+    # print(R)
+    V_rows = []
+    Qt = modulo_alc.traspuesta(Q)
+    cols_Qt = Qt.shape[1]
+    for i in range(cols_Qt):
+        V_rows.append(modulo_alc.res_tri(R, Qt[:,i], False))
+        print(V_rows[-1].shape)
+    V = np.array(V_rows)
+    print(f"V.shape: {V.shape}")
+    return modulo_alc.productoMatricial(Y, V)
+
 
 def generarY(vector, n):
     # checkear que valores sean 1 o 0

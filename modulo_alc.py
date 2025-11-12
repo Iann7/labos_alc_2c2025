@@ -514,8 +514,8 @@ def QR_con_HH(A,tol=1e-12):
     Si la matriz A no cumple m>=n, debe retornar None
     """
     m, n = A.shape
-    if m < n:
-        return None
+    # if m < n:
+    #     return None
     
     R = A.copy()
     Q = np.eye(m)
@@ -726,26 +726,26 @@ def calcular_sigma_casita(A,tol):
     return sigma_casita
 
 def svd_reducida(A,k="max",tol=1e-15):
-        """
-        A la matriz de interes (de m x n)
-        k el numero de valores singulares (y vectores) a retener.
-        tol la tolerancia para considerar un valor singular igual a cero
-        Retorna hatU (matriz de m x k), hatSig (vector de k valores singulares) y hatV (matriz de n x k)
-        """
-        filas_a,columnas_a= A.shape
-        a_t_a = productoMatricial(traspuesta(A),A)
-        a_t_a = (a_t_a + traspuesta(a_t_a)) / 2
-        V,diagonal_autovalores_de_ata = diagRH(a_t_a,tol)
-        Sigma_casita_diagonal = calcular_sigma_casita(diagonal_autovalores_de_ata , tol)
-        r=len(Sigma_casita_diagonal)
-        V_casita = V[:,:r]
-        B = productoMatricial(A, V_casita)  
-        U_t_norm = np.array(normaliza(traspuesta(B),p=2))
-        U_casita = traspuesta(U_t_norm)
-        if k == "max":
-            k = r
-        
-        return  U_casita[:,:k],np.array(Sigma_casita_diagonal)[:k],V_casita[:,:k]
+    """
+    A la matriz de interes (de m x n)
+    k el numero de valores singulares (y vectores) a retener.
+    tol la tolerancia para considerar un valor singular igual a cero
+    Retorna hatU (matriz de m x k), hatSig (vector de k valores singulares) y hatV (matriz de n x k)
+    """
+    filas_a,columnas_a= A.shape
+    a_t_a = productoMatricial(traspuesta(A),A)
+    a_t_a = (a_t_a + traspuesta(a_t_a)) / 2
+    V,diagonal_autovalores_de_ata = diagRH(a_t_a,tol)
+    Sigma_casita_diagonal = calcular_sigma_casita(diagonal_autovalores_de_ata , tol)
+    r=len(Sigma_casita_diagonal)
+    V_casita = V[:,:r]
+    B = productoMatricial(A, V_casita)  
+    U_t_norm = np.array(normaliza(traspuesta(B),p=2))
+    U_casita = traspuesta(U_t_norm)
+    if k == "max":
+        k = r
+    
+    return  U_casita[:,:k],np.array(Sigma_casita_diagonal)[:k],V_casita[:,:k]
 
 # endregion
 
@@ -1287,9 +1287,6 @@ def tests8():
 
     def test_svd_reducida_mn(A,tol=1e-15):
         m,n = A.shape
-        print(f"m: {m}, n: {n}")
-        # if m==n and m==5:
-        #     print("a")
         print(A)
         hU,hS,hV = svd_reducida(A,tol=tol)
         nU,nS,nVT = np.linalg.svd(A)
@@ -1303,8 +1300,6 @@ def tests8():
     for m in [2,5,10,20]:
         for n in [2,5,10,20]:
             for i in range(2):
-                if m==5 and n==10:
-                    print("a")
                 A = genera_matriz_para_test(m,n)
                 test_svd_reducida_mn(A)
 
