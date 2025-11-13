@@ -1,5 +1,6 @@
 import numpy as np
 import modulo_alc
+from modulo_alc import svd_reducida,productoMatricial,traspuesta
 path_base = "./cats_and_dogs"
 
 def main():
@@ -13,10 +14,24 @@ def main():
     return 
 
 def fullyConnectedLineal_Cholesky(X, Y):
-    return None
+    return None 
 
-def fullyConnectedLineal_SVD(X, Y):
-    return None
+
+
+def list_to_diag(X:list):
+    n = len(X)
+    matriz_diagonal:np.ndarray = np.zeros((n,n))
+    for i in range(n):
+        matriz_diagonal[i][i]=X[i]
+    return matriz_diagonal
+    
+def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
+    n,p = X.shape
+    U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
+    U_de_x_traspuesta = traspuesta(U_de_x)
+    inversa_de_Sigma_x = list_to_diag(1.0 / Sigma_de_x)  
+    X_inversa = productoMatricial(productoMatricial(V_de_x,inversa_de_Sigma_x),U_de_x_traspuesta)
+    return productoMatricial(Y,X_inversa)
 
 def fullyConnectedLineal_QR(X, Y):
     # print(X)
