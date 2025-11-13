@@ -13,8 +13,32 @@ def main():
     print(f"W_SVD:{W_SVD}")
     return 
 
+
+
+def fullyConnectedLineal_Cholesky(X, Y):
+    #TODO
+    return None 
+
+def pinvEcuacionesNormales(X,L,Y):
+    #TODO
+    return None
+
+def esPseudoInversa(X,pX,tol=1e-8):
+    #TODO
+    # Con Moore Penrose
+    return False 
+
+
 def fullyConnectedLineal_Cholesky(X, Y):
     return None 
+
+
+#EVALUACIÓN Y BENCHMARKING 
+#TODO: Generar una matriz de confusión evaluando a partir de los pares de embeddings de val o test (X_v,Y_v)
+#TODO: Presentar una tabla comparativa de los resultados de cada metodología donde en las columnas se debe mostrar perf de clasificación 
+#SINTESIS FINAL 
+#TODO: 400 PALABRAS SINTETIZANDO
+
 
 
 
@@ -52,7 +76,14 @@ def fullyConnectedLineal_QR(X, Y):
     V = np.array(V_rows)
     print(f"V.shape: {V.shape}")
     return modulo_alc.productoMatricial(Y, V)
+    
+def pinvHouseHolder(Q,R,Y):
+    #TODO
+    return None 
 
+def pinvGramSchmidt(Q,R,Y):
+    #TODO
+    return None
 
 def generarY(vector, n):
     # checkear que valores sean 1 o 0
