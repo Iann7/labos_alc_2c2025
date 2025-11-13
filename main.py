@@ -10,7 +10,7 @@ def main():
     W_QR = fullyConnectedLineal_QR(X_t, Y_t)
 
     print(f"W_QR: {W_QR}")
-
+    print(f"W_SVD:{W_SVD}")
     return 
 
 def fullyConnectedLineal_Cholesky(X, Y):
@@ -24,14 +24,17 @@ def list_to_diag(X:list):
     for i in range(n):
         matriz_diagonal[i][i]=X[i]
     return matriz_diagonal
+
+def pinSVD(U,S,V,Y):
+    U_traspuesta = traspuesta(U)
+    S_inversa = list_to_diag(1.0 / S)  
+    X_inversa = productoMatricial(productoMatricial(V,S_inversa),U_traspuesta)
+    return productoMatricial(Y,X_inversa)
     
 def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
-    n,p = X.shape
+    n,_ = X.shape
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
-    U_de_x_traspuesta = traspuesta(U_de_x)
-    inversa_de_Sigma_x = list_to_diag(1.0 / Sigma_de_x)  
-    X_inversa = productoMatricial(productoMatricial(V_de_x,inversa_de_Sigma_x),U_de_x_traspuesta)
-    return productoMatricial(Y,X_inversa)
+    return pinSVD(Y, U_de_x, Sigma_de_x, V_de_x)
 
 def fullyConnectedLineal_QR(X, Y):
     # print(X)
