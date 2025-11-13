@@ -44,11 +44,6 @@ def esPseudoInversa(X,pX,tol=1e-8):
     if not condicion_4: return False
     return True 
 
-
-def fullyConnectedLineal_Cholesky(X, Y):
-    return None 
-
-
 #EVALUACIÓN Y BENCHMARKING 
 #TODO: Generar una matriz de confusión evaluando a partir de los pares de embeddings de val o test (X_v,Y_v)
 #TODO: Presentar una tabla comparativa de los resultados de cada metodología donde en las columnas se debe mostrar perf de clasificación 
