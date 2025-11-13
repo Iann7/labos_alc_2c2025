@@ -1,6 +1,6 @@
 import numpy as np
 import modulo_alc
-from modulo_alc import svd_reducida,productoMatricial,traspuesta
+from modulo_alc import svd_reducida,productoMatricial,traspuesta,matricesIguales
 path_base = "./cats_and_dogs"
 
 def main():
@@ -23,10 +23,26 @@ def pinvEcuacionesNormales(X,L,Y):
     #TODO
     return None
 
+def hermitiana(A):
+    return traspuesta(A) #CORRECTO PARA DATOS REALES :D 
 def esPseudoInversa(X,pX,tol=1e-8):
-    #TODO
     # Con Moore Penrose
-    return False 
+    X_pX = productoMatricial(X,pX)
+    pX_X = productoMatricial(pX,X)
+    X_pX_X = productoMatricial(X_pX,X)
+    pX_X_pX = productoMatricial(pX,X_pX)
+    # X_pX_X = X
+    condicion_1 = matricesIguales(X_pX_X,X,atol=tol)
+    if not condicion_1:return False
+    # pX_X_pX = pX
+    condicion_2 = matricesIguales(pX_X_pX,pX,atol=tol)
+    if not condicion_2: return False
+    # (X_pX)^* = X_pX
+    condicion_3  = matricesIguales(hermitiana(X_pX),X_pX,atol=tol)
+    if not condicion_3: return False
+    condicion_4 = matricesIguales(hermitiana(pX_X),pX_X,atol=tol)
+    if not condicion_4: return False
+    return True 
 
 
 def fullyConnectedLineal_Cholesky(X, Y):
@@ -76,7 +92,7 @@ def fullyConnectedLineal_QR(X, Y):
     V = np.array(V_rows)
     print(f"V.shape: {V.shape}")
     return modulo_alc.productoMatricial(Y, V)
-    
+
 def pinvHouseHolder(Q,R,Y):
     #TODO
     return None 
