@@ -69,7 +69,7 @@ def pinSVD(U,S,V,Y):
 def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
     n,_ = X.shape
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
-    return pinSVD(Y, U_de_x, Sigma_de_x, V_de_x)
+    return pinSVD(U_de_x, Sigma_de_x, V_de_x,Y)
 
 def fullyConnectedLineal_QR(X, Y):
     # print(X)
