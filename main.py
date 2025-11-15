@@ -1,45 +1,103 @@
 import numpy as np
 import modulo_alc
-from modulo_alc import svd_reducida,productoMatricial,traspuesta,matricesIguales,calculaCholesky,res_tri
+from modulo_alc import svd_reducida,productoMatricial,traspuesta,matricesIguales,calculaCholesky,res_tri, inversa
 path_base = "./cats_and_dogs"
 
 def main():
     X_t, Y_t, X_v, Y_v = cargarDataset(path_base)
-    W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)
+    # W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)
+    # print(f"W_Cholesky: {W_Cholesky}")
     W_QR = fullyConnectedLineal_QR(X_t, Y_t)
     print(f"W_QR: {W_QR}")
-    W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
-    print(f"W_SVD:{W_SVD}")
+    # W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
+    # print(f"W_SVD:{W_SVD}")
     return 
 
-def res_tri_mat(Triang, Y, inferior=False):
-    X = [] 
+def res_tri_mat(Triang, Y, inferior=True):
+    X_cols = [] 
+    Y_cols_count = Y.shape[1]
+    for i in range(Y_cols_count):
+        X_cols.append(res_tri(Triang, Y[:, i], inferior))
+    X = traspuesta(np.array(X_cols))
+    return X
+
+# Input: X matriz de embeddings, L la matriz de Cholesky y Y matriz de targets de entrenamiento
+# Output: W matriz de pesos
+def pinvEcuacionesNormales(X, L, Y):
+    filas, columnas = X.shape
+    rango = get_rango(X)
+    W = None
+    if columnas == rango and filas > columnas:
+        # L = Cholesky(Xt * X)
+        # L * Lt * U = Xt
+        # Resolvemos para U:
+        # L * A = Xt
+        # Lt * U = A
+
+        # L * A = Xt
+        A = res_tri_mat(L, traspuesta(X))
+
+        # Lt * U = A
+        U = res_tri_mat(traspuesta(L), A, inferior=False)
+
+        # W = Y * U
+        W = productoMatricial(Y, U)
+    
+    elif rango == filas and filas < columnas:
+        # L = Cholesky(X * Xt)
+        # V * (L * Lt) = Xt
+        # (V * (L * Lt))t = X
+        # L * Lt * Vt = X
+
+        # Entonces Resolvemos para Vt:
+        # L * (Lt * Vt) = X
+        # L * A = X
+        # Lt * Vt = A
+
+        # L * A = X
+        A = res_tri_mat(L, X)
+
+        # Lt * Vt = A
+        Vt = res_tri_mat(traspuesta(L), A)
+
+        V = traspuesta(Vt)
+        W = productoMatricial(Y, V)
+    
+    # TODO Consultar si está bien asumir esto:
+    # Asumimos que deberíamos caer en alguno de los dos casos anteriores
+    return W
+
 
 def fullyConnectedLineal_Cholesky(X, Y):
-    #TODO
     filas,columnas = X.shape
     rango = get_rango(X)
-    if (columnas==rango and filas>columnas):
-        Xt_X = productoMatricial(traspuesta(X), X)
+    Xt = traspuesta(X)
+    W = None
+
+    if columnas==rango and filas>columnas:
+        Xt_X = productoMatricial(Xt, X)
         L = calculaCholesky(Xt_X)
-        U_cols = []
-        for row in X: # = col in Xt
-            U_cols.append(res_tri(L, row))
-        U = traspuesta(np.array(U_cols))
-        return productoMatricial(Y, U)
-        return
-    elif (rango == filas  and filas<columnas):
-        X_Xt = productoMatricial(X,traspuesta(X))
+        W = pinvEcuacionesNormales(X, L, Y)
+
+    elif rango == filas  and filas<columnas:
+        X_Xt = productoMatricial(X, Xt)
         L = calculaCholesky(X_Xt)
-        return 
-    elif(rango == filas and filas==columnas):
-        resultado = res_tri_mat(W,Y,True)
-        return 
+        W = pinvEcuacionesNormales(X, L, Y)
+
+    elif rango == filas and filas==columnas:
+        # W * X = Y
+        # W = Y * X_inv
+        X_inv = inversa(X) 
+        # Sabemos que tiene inversa porque es cuadrada y de rango completo
+        # Si una matriz inversible, entonces tiene LU
+
+        W = productoMatricial(Y, X_inv)
+
     else:
         #FIXME: se puede llegar a este caso?
-        
         return None
-    return None
+
+    return W
 
 def get_rango(X):
     _,Sigma,_ = svd_reducida(X)
@@ -98,18 +156,25 @@ def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
     return pinSVD(U_de_x, Sigma_de_x, V_de_x,Y)
 
-def fullyConnectedLineal_QR(X, Y):
+def fullyConnectedLineal_QR(X, Y, metodo='RH'):
     X, Y = reducir_matrices_testeo(X, Y)
-    Q, R = QR_reducida(traspuesta(X))
-    V = productoMatricial(Q,modulo_alc.inversa(traspuesta(R)))
-    # V = pinv_v2(Q, R)
-    return modulo_alc.productoMatricial(Y, V)
+    Q, R = QR_reducida(traspuesta(X), metodo)
+    # V = productoMatricial(Q,modulo_alc.inversa(traspuesta(R)))
+    W = pinvHouseHolder(Q, R, Y)
+    return W
+
+def pinvHouseHolder(Q, R, Y):
+    V = res_tri_mat(R, traspuesta(Q))
+    W = productoMatricial(Y, V)
+    return W
+
+def pinvGramSchmidt(Q, R, Y):
+    return pinvHouseHolder(Q, R, Y)
 
 def reducir_matrices_testeo(X, Y):
     X = X[:,:10]
     Y = Y[:,:10]
     return X,Y
-
 
 def QR_reducida(A, metodo='RH', tol=1e-12):
     Q, R = modulo_alc.calculaQR(modulo_alc.traspuesta(A), metodo, tol)
@@ -129,13 +194,6 @@ def pinv_v2(Q, R):
     print("hola")
     return
 
-def pinvHouseHolder(Q,R,Y):
-    #TODO
-    return None 
-
-def pinvGramSchmidt(Q,R,Y):
-    #TODO
-    return None
 
 def generarY(vector, n):
     # checkear que valores sean 1 o 0
