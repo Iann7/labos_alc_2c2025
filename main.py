@@ -5,12 +5,12 @@ path_base = "./cats_and_dogs"
 
 def main():
     X_t, Y_t, X_v, Y_v = cargarDataset(path_base)
-    # W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)
-    # print(f"W_Cholesky: {W_Cholesky}")
-    # W_QR = fullyConnectedLineal_QR(X_t, Y_t)
-    # print(f"W_QR: {W_QR}")
+    W_QR = fullyConnectedLineal_QR(X_t, Y_t)
+    print(f"W_QR: {W_QR}")
     W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
     print(f"W_SVD:{W_SVD}")
+    W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)
+    print(f"W_Cholesky: {W_Cholesky}")
     return 
 
 def res_tri_mat(Triang, Y, inferior=True):
@@ -25,7 +25,7 @@ def res_tri_mat(Triang, Y, inferior=True):
 # Output: W matriz de pesos
 def pinvEcuacionesNormales(X, L, Y):
     filas, columnas = X.shape
-    rango = get_rango(X)
+    rango = getRango(X)
     W = None
     if columnas == rango and filas > columnas:
         # L = Cholesky(Xt * X)
@@ -69,8 +69,9 @@ def pinvEcuacionesNormales(X, L, Y):
 
 
 def fullyConnectedLineal_Cholesky(X, Y):
+    X, Y = reducir_matrices_testeo(X, Y)
     filas,columnas = X.shape
-    rango = get_rango(X)
+    rango = getRango(X)
     Xt = traspuesta(X)
     W = None
 
@@ -99,13 +100,9 @@ def fullyConnectedLineal_Cholesky(X, Y):
 
     return W
 
-def get_rango(X):
+def getRango(X):
     _,Sigma,_ = svd_reducida(X)
     return len(Sigma)
-
-def pinvEcuacionesNormales(X,L,Y):
-    #TODO
-    return None
 
 def hermitiana(A):
     return traspuesta(A) #CORRECTO PARA DATOS REALES :D 
@@ -157,10 +154,10 @@ def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
     return pinSVD(U_de_x, Sigma_de_x, V_de_x,Y)
 
-def fullyConnectedLineal_QR(X, Y, metodo='RH'):
-    X, Y = reducir_matrices_testeo(X, Y)
-    print(f"X: {X}")
-    print(f"Y: {Y}")
+def fullyConnectedLineal_QR(X, Y, metodo='GS'):
+    # X, Y = reducir_matrices_testeo(X, Y)
+    # print(f"X: {X}")
+    # print(f"Y: {Y}")
     Q, R = QR_reducida(traspuesta(X), metodo)
     # V = productoMatricial(Q,modulo_alc.inversa(traspuesta(R)))
     W = pinvHouseHolder(Q, R, Y)
@@ -175,8 +172,8 @@ def pinvGramSchmidt(Q, R, Y):
     return pinvHouseHolder(Q, R, Y)
 
 def reducir_matrices_testeo(X, Y):
-    X = X[:,:2]
-    Y = Y[:,:2]
+    X = X[:,:100]
+    Y = Y[:,:100]
     return X,Y
 
 def QR_reducida(A, metodo='RH', tol=1e-12):

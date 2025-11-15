@@ -344,8 +344,8 @@ def calculaLU(A):
             
     L = obtenerL(Ac)
     U = obtenerU(Ac)
-    print(f"L: {L}")
-    print(f"U: {U}")
+    # print(f"L: {L}")
+    # print(f"U: {U}")
     
 
     return L, U, cant_op
@@ -466,7 +466,7 @@ def QR_con_GS(A,tol=1e-12,retorna_nops=False):
     Si la matriz A no es de n x n, debe retornar None
     """
     m, n = A.shape
-    assert m >= n,"ERROR M>=N"
+    # assert m >= n,"ERROR M>=N"
     # if not esCuadrada(A):
     #     return None
 
@@ -515,7 +515,7 @@ def QR_con_HH(A,tol=1e-12):
     Si la matriz A no cumple m>=n, debe retornar None
     """
     m, n = A.shape
-    assert m >= n,"ERROR M>=N"
+    # assert m >= n,"ERROR M>=N"
     # if m < n:
     #     return None
     
