@@ -586,7 +586,7 @@ def metpot2k(A,tol=1e-8,K=100):
 
 
 def diagRH(A,tol=1e-15,K=1000):
-    if not esSimetrica(A, 10*tol):
+    if not esSimetrica(A, 100*tol):
         print("FALLO POR NO SIMETRICA")
         return None
     n, _ = A.shape

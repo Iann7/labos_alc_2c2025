@@ -7,10 +7,10 @@ def main():
     X_t, Y_t, X_v, Y_v = cargarDataset(path_base)
     # W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)
     # print(f"W_Cholesky: {W_Cholesky}")
-    W_QR = fullyConnectedLineal_QR(X_t, Y_t)
-    print(f"W_QR: {W_QR}")
-    # W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
-    # print(f"W_SVD:{W_SVD}")
+    # W_QR = fullyConnectedLineal_QR(X_t, Y_t)
+    # print(f"W_QR: {W_QR}")
+    W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
+    print(f"W_SVD:{W_SVD}")
     return 
 
 def res_tri_mat(Triang, Y, inferior=True):
@@ -109,6 +109,7 @@ def pinvEcuacionesNormales(X,L,Y):
 
 def hermitiana(A):
     return traspuesta(A) #CORRECTO PARA DATOS REALES :D 
+
 def esPseudoInversa(X,pX,tol=1e-8):
     # Con Moore Penrose
     X_pX = productoMatricial(X,pX)
@@ -145,19 +146,21 @@ def list_to_diag(X):
     return matriz_diagonal
 
 def pinSVD(U,S,V,Y):
-    X,Y = reducir_matrices_testeo(X,Y)
     U_traspuesta = traspuesta(U)
     S_inversa = list_to_diag(1.0 / S)  
     X_inversa = productoMatricial(productoMatricial(V,S_inversa),U_traspuesta)
     return productoMatricial(Y,X_inversa)
     
 def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
+    X, Y = reducir_matrices_testeo(X, Y)
     n,_ = X.shape
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
     return pinSVD(U_de_x, Sigma_de_x, V_de_x,Y)
 
 def fullyConnectedLineal_QR(X, Y, metodo='RH'):
     X, Y = reducir_matrices_testeo(X, Y)
+    print(f"X: {X}")
+    print(f"Y: {Y}")
     Q, R = QR_reducida(traspuesta(X), metodo)
     # V = productoMatricial(Q,modulo_alc.inversa(traspuesta(R)))
     W = pinvHouseHolder(Q, R, Y)
@@ -172,8 +175,8 @@ def pinvGramSchmidt(Q, R, Y):
     return pinvHouseHolder(Q, R, Y)
 
 def reducir_matrices_testeo(X, Y):
-    X = X[:,:10]
-    Y = Y[:,:10]
+    X = X[:,:2]
+    Y = Y[:,:2]
     return X,Y
 
 def QR_reducida(A, metodo='RH', tol=1e-12):
