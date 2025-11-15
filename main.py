@@ -1,23 +1,49 @@
 import numpy as np
 import modulo_alc
-from modulo_alc import svd_reducida,productoMatricial,traspuesta,matricesIguales
+from modulo_alc import svd_reducida,productoMatricial,traspuesta,matricesIguales,calculaCholesky,res_tri
 path_base = "./cats_and_dogs"
 
 def main():
     X_t, Y_t, X_v, Y_v = cargarDataset(path_base)
     W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)
-    W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
     W_QR = fullyConnectedLineal_QR(X_t, Y_t)
-
     print(f"W_QR: {W_QR}")
+    W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
     print(f"W_SVD:{W_SVD}")
     return 
 
-
+def res_tri_mat(Triang, Y, inferior=False):
+    X = [] 
 
 def fullyConnectedLineal_Cholesky(X, Y):
     #TODO
-    return None 
+    filas,columnas = X.shape
+    rango = get_rango(X)
+    if (columnas==rango and filas>columnas):
+        Xt_X = productoMatricial(traspuesta(X), X)
+        L = calculaCholesky(Xt_X)
+        U_cols = []
+        for row in X: # = col in Xt
+            U_cols.append(res_tri(L, row))
+        U = traspuesta(np.array(U_cols))
+        return productoMatricial(Y, U)
+        return
+    elif (rango == filas  and filas<columnas):
+        X_Xt = productoMatricial(X,traspuesta(X))
+        L = calculaCholesky(X_Xt)
+        return 
+    elif(rango == filas and filas==columnas):
+        resultado = res_tri_mat(W,Y,True)
+        return 
+    else:
+        #FIXME: se puede llegar a este caso?
+        
+        return None
+    return None
+
+def get_rango(X):
+    _,Sigma,_ = svd_reducida(X)
+    return len(Sigma)
 
 def pinvEcuacionesNormales(X,L,Y):
     #TODO
@@ -53,7 +79,7 @@ def esPseudoInversa(X,pX,tol=1e-8):
 
 
 
-def list_to_diag(X:list):
+def list_to_diag(X):
     n = len(X)
     matriz_diagonal:np.ndarray = np.zeros((n,n))
     for i in range(n):
@@ -61,6 +87,7 @@ def list_to_diag(X:list):
     return matriz_diagonal
 
 def pinSVD(U,S,V,Y):
+    X,Y = reducir_matrices_testeo(X,Y)
     U_traspuesta = traspuesta(U)
     S_inversa = list_to_diag(1.0 / S)  
     X_inversa = productoMatricial(productoMatricial(V,S_inversa),U_traspuesta)
@@ -72,21 +99,35 @@ def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
     return pinSVD(U_de_x, Sigma_de_x, V_de_x,Y)
 
 def fullyConnectedLineal_QR(X, Y):
-    # print(X)
+    X, Y = reducir_matrices_testeo(X, Y)
+    Q, R = QR_reducida(traspuesta(X))
+    V = productoMatricial(Q,modulo_alc.inversa(traspuesta(R)))
+    # V = pinv_v2(Q, R)
+    return modulo_alc.productoMatricial(Y, V)
+
+def reducir_matrices_testeo(X, Y):
     X = X[:,:10]
     Y = Y[:,:10]
-    Q, R = modulo_alc.calculaQR(modulo_alc.traspuesta(X))
-    # print(Q)
-    # print(R)
-    V_rows = []
-    Qt = modulo_alc.traspuesta(Q)
-    cols_Qt = Qt.shape[1]
-    for i in range(cols_Qt):
-        V_rows.append(modulo_alc.res_tri(R, Qt[:,i], False))
-        print(V_rows[-1].shape)
-    V = np.array(V_rows)
-    print(f"V.shape: {V.shape}")
-    return modulo_alc.productoMatricial(Y, V)
+    return X,Y
+
+
+def QR_reducida(A, metodo='RH', tol=1e-12):
+    Q, R = modulo_alc.calculaQR(modulo_alc.traspuesta(A), metodo, tol)
+    return Q[:, :A.shape[1]], R[:A.shape[1],:]
+
+
+def pinv_v2(Q, R):
+    #V_rows = []
+    #Qt = modulo_alc.traspuesta(Q)
+    #cols_Qt = Qt.shape[1]
+    #for i in range(cols_Qt):
+    #    V_rows.append(modulo_alc.res_tri(R, Qt[:,i], False))
+    #    print(V_rows[-1].shape)
+    #V = np.array(V_rows)    
+    #print(f"V.shape: {V.shape}")
+    # return V
+    print("hola")
+    return
 
 def pinvHouseHolder(Q,R,Y):
     #TODO
