@@ -1,4 +1,5 @@
 import numpy as np
+
 path_base = "./cats_and_dogs"
 
 # region HELPERS
@@ -1374,8 +1375,15 @@ def list_to_diag(X):
     return matriz_diagonal
 
 def reducir_matrices_testeo(X, Y):
-    X = X[:,:100]
-    Y = Y[:,:100]
+    
+    X_dogs = X[:,:50] 
+    Y_dogs = Y[:,:50]
+    # voy a agarrar las ultimas diez entradas de X que son los cats
+    X_cats = X[:,-50:]
+    Y_cats = Y[:,-50:]
+    X = np.column_stack((X_dogs, X_cats))
+    Y = np.column_stack((Y_dogs, Y_cats))
+    
     return X,Y
 
 def QR_reducida(A, metodo='RH', tol=1e-12):
@@ -1526,9 +1534,10 @@ def pinSVD(U,S,V,Y):
 # region Algoritmo 3
 
 def fullyConnectedLineal_QR(X, Y, metodo='GS'):
-    # X, Y = reducir_matrices_testeo(X, Y)
+    X, Y = reducir_matrices_testeo(X, Y)
     # print(f"X: {X}")
     # print(f"Y: {Y}")
+    
     Q, R = QR_reducida(traspuesta(X), metodo)
     # V = productoMatricial(Q,modulo_alc.inversa(traspuesta(R)))
     W = pinvHouseHolder(Q, R, Y)
