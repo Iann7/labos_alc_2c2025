@@ -164,8 +164,7 @@ def getColumna(A, i):
 def productoMatricial(A, B):
     A_n, A_m = A.shape
     B_n, B_m = B.shape
-    if A_m != B_n:
-        return None
+    assert A_m == B_n, "ERROR LAS DIMENSIONES NO MATCHEAN" 
     res = np.zeros((A_n, B_m))
     for i in range(A_n):
         for j in range(B_m):
@@ -389,11 +388,9 @@ def res_tri(L, b, inferior=True):
     
 
 def inversa(A):
-    if not esCuadrada(A):
-        return None
+    assert esCuadrada(A), "No es cuadrada y se intento hacer inversa"
     L, U, _ = calculaLU(A)
-    if determinanteTriangular(U) == 0:
-        return None
+    assert determinanteTriangular(U) != 0, "Determinante = 0, se intento hacer inversa"
     n, _ = A.shape
     inv = np.zeros((n, n))
     for j in range(n):
@@ -1375,12 +1372,12 @@ def list_to_diag(X):
     return matriz_diagonal
 
 def reducir_matrices_testeo(X, Y):
-    
-    X_dogs = X[:,:50] 
-    Y_dogs = Y[:,:50]
+    cant = 50
+    X_dogs = X[:,:cant] 
+    Y_dogs = Y[:,:cant]
     # voy a agarrar las ultimas diez entradas de X que son los cats
-    X_cats = X[:,-50:]
-    Y_cats = Y[:,-50:]
+    X_cats = X[:,-cant:]
+    Y_cats = Y[:,-cant:]
     X = np.column_stack((X_dogs, X_cats))
     Y = np.column_stack((Y_dogs, Y_cats))
     
@@ -1438,7 +1435,7 @@ def cargarDataset(carpeta):
 # Input: X matriz de embeddings, L la matriz de Cholesky y Y matriz de targets de entrenamiento
 # Output: W matriz de pesos
 def fullyConnectedLineal_Cholesky(X, Y):
-    X, Y = reducir_matrices_testeo(X, Y)
+    #X, Y = reducir_matrices_testeo(X, Y)
     filas,columnas = X.shape
     rango = getRango(X)
     Xt = traspuesta(X)
@@ -1518,7 +1515,7 @@ def pinvEcuacionesNormales(X, L, Y):
 # region Algoritmo 2
 
 def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
-    X, Y = reducir_matrices_testeo(X, Y)
+    #X, Y = reducir_matrices_testeo(X, Y)
     n,_ = X.shape
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
     return pinSVD(U_de_x, Sigma_de_x, V_de_x,Y)
@@ -1534,7 +1531,7 @@ def pinSVD(U,S,V,Y):
 # region Algoritmo 3
 
 def fullyConnectedLineal_QR(X, Y, metodo='GS'):
-    X, Y = reducir_matrices_testeo(X, Y)
+    #X, Y = reducir_matrices_testeo(X, Y)
     # print(f"X: {X}")
     # print(f"Y: {Y}")
     
@@ -1543,13 +1540,31 @@ def fullyConnectedLineal_QR(X, Y, metodo='GS'):
     W = pinvHouseHolder(Q, R, Y)
     return W
 
-def pinvHouseHolder(Q, R, Y):
-    V = res_tri_mat(R, traspuesta(Q))
+def pinvHouseHolder(Q, R, Y):    
+    V_t = productoMatricial(Q,inversa(traspuesta(R)))
+    V = traspuesta(V_t)
     W = productoMatricial(Y, V)
     return W
 
 def pinvGramSchmidt(Q, R, Y):
     return pinvHouseHolder(Q, R, Y)
+
+def altfullyConnectedLineal_QR(X,Y,metodo="GS"):
+    X_t = traspuesta(X)
+    
+    # Calculamos QR usando 
+    Q, R = QR_reducida(traspuesta(X), metodo)
+
+    # Punto 3
+    R_t = traspuesta(R)
+    X_pseudoInv = productoMatricial(Q,inversa(R_t))
+
+    # Punto 5
+    V = X_pseudoInv
+
+    #Punto 6
+    W = productoMatricial(Y,V)
+    return W
 
 # TEMPORAL
 def pinv_v2(Q, R):
@@ -1599,10 +1614,10 @@ def main():
     X_t, Y_t, X_v, Y_v = cargarDataset(path_base)
     W_QR = fullyConnectedLineal_QR(X_t, Y_t)
     print(f"W_QR: {W_QR}")
-    W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
-    print(f"W_SVD:{W_SVD}")
-    W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)
-    print(f"W_Cholesky: {W_Cholesky}")
+    #W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
+    #print(f"W_SVD:{W_SVD}")
+    #W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)
+    #print(f"W_Cholesky: {W_Cholesky}")
     return 
 
 if __name__ == "__main__":
