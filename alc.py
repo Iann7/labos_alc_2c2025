@@ -739,6 +739,7 @@ def svd_reducida(A,k="max",tol=1e-15):
     
     return  U_casita[:,:k],np.array(Sigma_casita_diagonal)[:k],V_casita[:,:k]
 
+
 # endregion
 
 # region TESTS Labos
@@ -1345,7 +1346,7 @@ def res_tri_mat(Triang, Y, inferior=True):
     Y_cols_count = Y.shape[1]
     for i in range(Y_cols_count):
         X_cols.append(res_tri(Triang, Y[:, i], inferior))
-    print(f"X_cols {X_cols}")
+    #print(f"X_cols {X_cols}")
     X = traspuesta(np.array(X_cols))
     return X
 
@@ -1360,15 +1361,17 @@ def list_to_diag(X):
     return matriz_diagonal
 
 def reducir_matrices_testeo(X, Y):
-    cant = 25
-    X_dogs = X[:,:cant] 
-    Y_dogs = Y[:,:cant]
-    # voy a agarrar las ultimas diez entradas de X que son los cats
-    X_cats = X[:,-cant:]
-    Y_cats = Y[:,-cant:]
-    X = np.column_stack((X_dogs, X_cats))
-    Y = np.column_stack((Y_dogs, Y_cats))
-    
+    cant = 100
+    if cant > 0 : # No reducir si es menor o igual que 0
+        print(f"Reduciendo matrices de entrenamiento a {cant} ejemplos por clase")
+        X_dogs = X[:,:cant] 
+        Y_dogs = Y[:,:cant]
+        # voy a agarrar las ultimas diez entradas de X que son los cats
+        X_cats = X[:,-cant:]
+        Y_cats = Y[:,-cant:]
+        X = np.column_stack((X_dogs, X_cats))
+        Y = np.column_stack((Y_dogs, Y_cats))
+        
     return X,Y
 
 def QR_reducida(A, metodo='RH', tol=1e-12):
@@ -1558,7 +1561,7 @@ def main():
     # testsLabo()
     X_t, Y_t, X_v, Y_v = cargarDataset(path_base)
     W_QR = fullyConnectedLineal_QR(X_t, Y_t)
-    print(f"W_QR: {W_QR}")
+    #print(f"W_QR: {W_QR}")
     #W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
     #print(f"W_SVD:{W_SVD}")
     #W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)

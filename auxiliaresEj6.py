@@ -5,13 +5,13 @@ from alc import *
 
 def armarMatrizDeConfusion(W, X_v, Y_v):
     def actualizarMatrizDeConfusion(matrizConfusion, esPerro, esPerro_Predicho):
-        if esPerro and esPerro_Predicho:
+        if esPerro and esPerro_Predicho: # Es perro y se predijo perro
             matrizConfusion[1][1] += 1
-        elif esPerro and not esPerro_Predicho:
+        elif esPerro and not esPerro_Predicho: # Es perro y se predijo gato
             matrizConfusion[1][0] += 1
-        elif not esPerro and esPerro_Predicho:     
+        elif not esPerro and esPerro_Predicho: # Es gato y se predijo perro
             matrizConfusion[0][1] += 1
-        else:     
+        else: # Es gato y se predijo gato
             matrizConfusion[0][0] += 1
 
 
@@ -58,5 +58,9 @@ def calcularYPlotearMatrizDeConfusion(X_t, Y_t, X_v, Y_v, metodo="Cholesky"):
     
     print(f"FINALIZO {metodo}")
     matrizConfusion = armarMatrizDeConfusion(W, X_v, Y_v)
+    print(f"Hitrate gato {matrizConfusion[0][0]/(matrizConfusion[0][0]+matrizConfusion[0][1])} siendo {matrizConfusion[0][0]} de {matrizConfusion[0][0]+matrizConfusion[0][1]} gatos correctamente clasificados")
+    print(f"Hitrate perro {matrizConfusion[1][1]/(matrizConfusion[1][0]+matrizConfusion[1][1])} siendo {matrizConfusion[1][1]} de {matrizConfusion[1][0]+matrizConfusion[1][1]} perros correctamente clasificados")
+    print(f"Hitrate total {(matrizConfusion[0][0]+matrizConfusion[1][1])/(matrizConfusion[0][0]+matrizConfusion[0][1]+matrizConfusion[1][0]+matrizConfusion[1][1])}")
+    
     plot_confusion_matrix(matrizConfusion, f"Matriz de Confusión - {metodo}")
-    return matrizConfusion
+    return 
