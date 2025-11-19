@@ -1360,7 +1360,7 @@ def list_to_diag(X):
     return matriz_diagonal
 
 def reducir_matrices_testeo(X, Y):
-    cant = 10
+    cant = 25
     X_dogs = X[:,:cant] 
     Y_dogs = Y[:,:cant]
     # voy a agarrar las ultimas diez entradas de X que son los cats
