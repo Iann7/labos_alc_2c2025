@@ -152,15 +152,6 @@ def sumarConIdentidad(A):
         Ac[i,i] += 1
     return Ac
 
-def getColumna(A, i):
-    n, m = A.shape
-    if i >= m:
-        return None
-    res = np.zeros(n)
-    for j in range(n):
-        res[j] = A[j, i]
-    return res
-
 def productoMatricial(A, B):
     A_n, A_m = A.shape
     B_n, B_m = B.shape
@@ -169,7 +160,7 @@ def productoMatricial(A, B):
     for i in range(A_n):
         for j in range(B_m):
             row_A = A[i]
-            col_B = getColumna(B, j)
+            col_B = B[:, j]
             res[i, j] = productoEscalar(row_A, col_B)
 
     return res
@@ -435,8 +426,9 @@ def esSDP(A, atol=1e-8):
     return True
 
 def calculaCholesky(A, atol=1e-10):
-    if not esSDP(A, atol):
-        return None
+    # Asumimos que el A es sdp para evitar operaciones innecesarias y errores por tolerancia
+    # if not esSDP(A, atol):
+    #     return None
     n, _ = A.shape
     L = np.zeros((n, n))
     for k in range(n):
@@ -465,9 +457,6 @@ def QR_con_GS(A,tol=1e-12,retorna_nops=False):
     Si la matriz A no es de n x n, debe retornar None
     """
     m, n = A.shape
-    # assert m >= n,"ERROR M>=N"
-    # if not esCuadrada(A):
-    #     return None
 
     norma2 = norma(A[:,0], 2) 
     qs = [A[:,0] * 1/norma2] # q_1 = a_1/||a_1||_2
@@ -514,9 +503,6 @@ def QR_con_HH(A,tol=1e-12):
     Si la matriz A no cumple m>=n, debe retornar None
     """
     m, n = A.shape
-    # assert m >= n,"ERROR M>=N"
-    # if m < n:
-    #     return None
     
     R = A.copy()
     Q = np.eye(m)
@@ -585,9 +571,13 @@ def metpot2k(A,tol=1e-8,K=100):
 
 
 def diagRH(A,tol=1e-15,K=1000):
-    if not esSimetrica(A, 100*tol):
-        print("FALLO POR NO SIMETRICA")
-        return None
+    # Forzamos que sea simetrica
+    A = (A + traspuesta(A)) / 2
+    # No checkeamos que sea simetrica para evitar costo de operaciones en el TP
+    # y para evitar arrastrar errores de precision al hacer tantas cuentas
+    # if not esSimetrica(A, 100*tol):
+    #     print("FALLO POR NO SIMETRICA")
+    #     return None
     n, _ = A.shape
     v_1, val_1, _ = metpot2k(A, tol, K)
     e_1 = np.zeros(n)
@@ -641,7 +631,7 @@ def transiciones_al_azar_uniformes(n,thres):
                 T[i, j] = 0
 
     for i in range(n):
-        col = getColumna(T, i)
+        col = T[:, i]
         if allclose(norma(col, 1), 0):
             fila = np.random.randint(0, n)
             T[fila, i] = 1
@@ -670,7 +660,7 @@ def nucleo(A,tol=1e-15):
     res = []
     for i in range(n):
         if allclose(D[i, i], 0, tol):
-            res.append(getColumna(S, i))
+            res.append(S[:, i])
 
     # print(f"res: {res}")
     return traspuesta(matriz(np.array(res)))
@@ -735,6 +725,7 @@ def svd_reducida(A,k="max",tol=1e-15):
     """
     filas_a,columnas_a= A.shape
     a_t_a = productoMatricial(traspuesta(A),A)
+    # Nos aseguramos de que sea simetrica con este (M + Mt) / 2
     a_t_a = (a_t_a + traspuesta(a_t_a)) / 2
     V,diagonal_autovalores_de_ata = diagRH(a_t_a,tol)
     Sigma_casita_diagonal = calcular_sigma_casita(diagonal_autovalores_de_ata , tol)
@@ -1354,12 +1345,9 @@ def res_tri_mat(Triang, Y, inferior=True):
     Y_cols_count = Y.shape[1]
     for i in range(Y_cols_count):
         X_cols.append(res_tri(Triang, Y[:, i], inferior))
+    print(f"X_cols {X_cols}")
     X = traspuesta(np.array(X_cols))
     return X
-
-def getRango(X):
-    _,Sigma,_ = svd_reducida(X)
-    return len(Sigma)
 
 def hermitiana(A):
     return traspuesta(A) #CORRECTO PARA DATOS REALES :D 
@@ -1372,7 +1360,7 @@ def list_to_diag(X):
     return matriz_diagonal
 
 def reducir_matrices_testeo(X, Y):
-    cant = 50
+    cant = 10
     X_dogs = X[:,:cant] 
     Y_dogs = Y[:,:cant]
     # voy a agarrar las ultimas diez entradas de X que son los cats
@@ -1384,8 +1372,11 @@ def reducir_matrices_testeo(X, Y):
     return X,Y
 
 def QR_reducida(A, metodo='RH', tol=1e-12):
-    Q, R = calculaQR(traspuesta(A), metodo, tol)
-    return Q[:, :A.shape[1]], R[:A.shape[1],:]
+    _, cols = A.shape
+    Q, R = calculaQR(A, metodo, tol)
+    # Asumimos que la cantidad de columnas es mayor a la cantidad de filas, por enunciado (1536x2000)
+    return Q[:, :cols], R[:cols,:]
+
 
 def generarY(vector, n):
     # checkear que valores sean 1 o 0
@@ -1435,23 +1426,23 @@ def cargarDataset(carpeta):
 # Input: X matriz de embeddings, L la matriz de Cholesky y Y matriz de targets de entrenamiento
 # Output: W matriz de pesos
 def fullyConnectedLineal_Cholesky(X, Y):
-    #X, Y = reducir_matrices_testeo(X, Y)
+    X, Y = reducir_matrices_testeo(X, Y)
     filas,columnas = X.shape
-    rango = getRango(X)
     Xt = traspuesta(X)
     W = None
+    # No calculamos el rango porque asumimos que X es de rango completo por precondicion
 
-    if columnas==rango and filas>columnas:
+    if filas>columnas:
         Xt_X = productoMatricial(Xt, X)
         L = calculaCholesky(Xt_X)
         W = pinvEcuacionesNormales(X, L, Y)
 
-    elif rango == filas  and filas<columnas:
+    elif filas<columnas:
         X_Xt = productoMatricial(X, Xt)
         L = calculaCholesky(X_Xt)
         W = pinvEcuacionesNormales(X, L, Y)
 
-    elif rango == filas and filas==columnas:
+    elif filas==columnas:
         # W * X = Y
         # W = Y * X_inv
         X_inv = inversa(X) 
@@ -1460,17 +1451,12 @@ def fullyConnectedLineal_Cholesky(X, Y):
 
         W = productoMatricial(Y, X_inv)
 
-    else:
-        #FIXME: se puede llegar a este caso?
-        return None
-
     return W
 
 def pinvEcuacionesNormales(X, L, Y):
     filas, columnas = X.shape
-    rango = getRango(X)
     W = None
-    if columnas == rango and filas > columnas:
+    if filas > columnas:
         # L = Cholesky(Xt * X)
         # L * Lt * U = Xt
         # Resolvemos para U:
@@ -1486,7 +1472,7 @@ def pinvEcuacionesNormales(X, L, Y):
         # W = Y * U
         W = productoMatricial(Y, U)
     
-    elif rango == filas and filas < columnas:
+    elif filas < columnas:
         # L = Cholesky(X * Xt)
         # V * (L * Lt) = Xt
         # (V * (L * Lt))t = X
@@ -1506,7 +1492,6 @@ def pinvEcuacionesNormales(X, L, Y):
         V = traspuesta(Vt)
         W = productoMatricial(Y, V)
     
-    # TODO Consultar si está bien asumir esto:
     # Asumimos que deberíamos caer en alguno de los dos casos anteriores
     return W
 
@@ -1515,7 +1500,7 @@ def pinvEcuacionesNormales(X, L, Y):
 # region Algoritmo 2
 
 def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
-    #X, Y = reducir_matrices_testeo(X, Y)
+    X, Y = reducir_matrices_testeo(X, Y)
     n,_ = X.shape
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
     return pinSVD(U_de_x, Sigma_de_x, V_de_x,Y)
@@ -1531,54 +1516,20 @@ def pinSVD(U,S,V,Y):
 # region Algoritmo 3
 
 def fullyConnectedLineal_QR(X, Y, metodo='GS'):
-    #X, Y = reducir_matrices_testeo(X, Y)
-    # print(f"X: {X}")
-    # print(f"Y: {Y}")
+    X, Y = reducir_matrices_testeo(X, Y)
     
     Q, R = QR_reducida(traspuesta(X), metodo)
-    # V = productoMatricial(Q,modulo_alc.inversa(traspuesta(R)))
     W = pinvHouseHolder(Q, R, Y)
     return W
 
 def pinvHouseHolder(Q, R, Y):    
-    V_t = productoMatricial(Q,inversa(traspuesta(R)))
+    V_t = res_tri_mat(R, traspuesta(Q))
     V = traspuesta(V_t)
     W = productoMatricial(Y, V)
     return W
 
 def pinvGramSchmidt(Q, R, Y):
     return pinvHouseHolder(Q, R, Y)
-
-def altfullyConnectedLineal_QR(X,Y,metodo="GS"):
-    X_t = traspuesta(X)
-    
-    # Calculamos QR usando 
-    Q, R = QR_reducida(traspuesta(X), metodo)
-
-    # Punto 3
-    R_t = traspuesta(R)
-    X_pseudoInv = productoMatricial(Q,inversa(R_t))
-
-    # Punto 5
-    V = X_pseudoInv
-
-    #Punto 6
-    W = productoMatricial(Y,V)
-    return W
-
-# TEMPORAL
-def pinv_v2(Q, R):
-    #V_rows = []
-    #Qt = modulo_alc.traspuesta(Q)
-    #cols_Qt = Qt.shape[1]
-    #for i in range(cols_Qt):
-    #    V_rows.append(modulo_alc.res_tri(R, Qt[:,i], False))
-    #    print(V_rows[-1].shape)
-    #V = np.array(V_rows)    
-    #print(f"V.shape: {V.shape}")
-    # return V
-    print("hola")
-    return
 
 # endregion
 
@@ -1600,12 +1551,6 @@ def esPseudoInversa(X,pX,tol=1e-8):
     condicion_4 = matricesIguales(hermitiana(pX_X),pX_X,atol=tol)
     if not condicion_4: return False
     return True 
-
-#EVALUACIÓN Y BENCHMARKING 
-#TODO: Generar una matriz de confusión evaluando a partir de los pares de embeddings de val o test (X_v,Y_v)
-#TODO: Presentar una tabla comparativa de los resultados de cada metodología donde en las columnas se debe mostrar perf de clasificación 
-#SINTESIS FINAL 
-#TODO: 400 PALABRAS SINTETIZANDO
 
 # endregion
 

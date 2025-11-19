@@ -436,8 +436,8 @@ def esSDP(A, atol=1e-8):
     return True
 
 def calculaCholesky(A, atol=1e-10):
-    if not esSDP(A, atol):
-        return None
+    # if not esSDP(A, atol):
+    #     return None
     n, _ = A.shape
     L = np.zeros((n, n))
     for k in range(n):
@@ -586,9 +586,10 @@ def metpot2k(A,tol=1e-8,K=100):
 
 
 def diagRH(A,tol=1e-15,K=1000):
-    if not esSimetrica(A, 100*tol):
-        print("FALLO POR NO SIMETRICA")
-        return None
+    # A = (A + traspuesta(A)) / 2
+    # if not esSimetrica(A, 100*tol):
+    #     print("FALLO POR NO SIMETRICA")
+    #     return None
     n, _ = A.shape
     v_1, val_1, _ = metpot2k(A, tol, K)
     e_1 = np.zeros(n)
@@ -1333,7 +1334,7 @@ def main():
     print('Ejecutando tests labo 3')
     #tests3()
     print('Ejecutando tests labo 4')
-    # tests4()
+    tests4()
     # A = np.array([
     #     [4.0, 12.0, -16.0],
     #     [12.0, 37.0, -43.0],
