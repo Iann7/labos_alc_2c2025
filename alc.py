@@ -1340,7 +1340,8 @@ def testsLabo():
 # endregion
 
 # region Helpers TP
-
+# Input: Triang matriz triangular (superior o inferior), b vector de terminos independientes, inferior booleano que indica si la matriz es inferior
+# Output: X solucion del sistema triangular
 def res_tri_mat(Triang, Y, inferior=True):
     X_cols = [] 
     Y_cols_count = Y.shape[1]
@@ -1353,6 +1354,8 @@ def res_tri_mat(Triang, Y, inferior=True):
 def hermitiana(A):
     return traspuesta(A) #CORRECTO PARA DATOS REALES :D 
 
+# Input: Lista X
+# Output: Matriz diagonal con los elementos de X en la diagonal
 def list_to_diag(X):
     n = len(X)
     matriz_diagonal:np.ndarray = np.zeros((n,n))
@@ -1360,6 +1363,8 @@ def list_to_diag(X):
         matriz_diagonal[i][i]=X[i]
     return matriz_diagonal
 
+# Input: Se le pasan X e Y de un tamano mayor a cant
+# Output: Se devuelven X e Y reducidas cantidad cant de perros y cantidad cant de gatos
 def reducir_matrices_testeo(X, Y):
     cant = 100
     if cant > 0 : # No reducir si es menor o igual que 0
@@ -1374,13 +1379,16 @@ def reducir_matrices_testeo(X, Y):
         
     return X,Y
 
+# Input: Se ingrea una matriz A, un metodo para descomponer en QR (HouseHolder o Gram Schmidt) y una cierta tolerancia
+# Output: Matrices Q y R de la descomposicion QR de A en su version reducida
 def QR_reducida(A, metodo='RH', tol=1e-12):
     _, cols = A.shape
     Q, R = calculaQR(A, metodo, tol)
     # Asumimos que la cantidad de columnas es mayor a la cantidad de filas, por enunciado (1536x2000)
     return Q[:, :cols], R[:cols,:]
 
-
+# Input: vector de [0,1] o [1,0] y n cantidad de columnas
+# Output: Matriz Y con el vector repetido n veces como columnas
 def generarY(vector, n):
     # checkear que valores sean 1 o 0
     cantUno = 0
@@ -1403,7 +1411,8 @@ def generarY(vector, n):
 # endregion
 
 # region Funciones TP
-
+# Input: Un path
+# Output: Devuelve embeddings X e Y de entrenamiento y validacion
 def cargarDataset(carpeta):
     dogs_t = np.load(carpeta + "/train/dogs/efficientnet_b3_embeddings.npy")
     cats_t = np.load(carpeta + "/train/cats/efficientnet_b3_embeddings.npy")
@@ -1456,6 +1465,8 @@ def fullyConnectedLineal_Cholesky(X, Y):
 
     return W
 
+# Input: X matriz de embeddings, L la matriz de Cholesky y Y matriz de targets de entrenamiento
+# Output: W matriz de pesos
 def pinvEcuacionesNormales(X, L, Y):
     filas, columnas = X.shape
     W = None
@@ -1502,12 +1513,16 @@ def pinvEcuacionesNormales(X, L, Y):
 
 # region Algoritmo 2
 
+# Input: X matriz de embeddings, L la matriz de Cholesky y Y matriz de targets de entrenamiento
+# Output: W matriz de pesos
 def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
     X, Y = reducir_matrices_testeo(X, Y)
     n,_ = X.shape
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
     return pinSVD(U_de_x, Sigma_de_x, V_de_x,Y)
 
+# Input: U,S,V matrices de la descomposicion SVD de X, Y matriz de targets de entrenamiento
+# Output: W matriz de pesos
 def pinSVD(U,S,V,Y):
     U_traspuesta = traspuesta(U)
     S_inversa = list_to_diag(1.0 / S)  
@@ -1518,6 +1533,8 @@ def pinSVD(U,S,V,Y):
 
 # region Algoritmo 3
 
+# Input: X matriz de embeddings, L la matriz de Cholesky y Y matriz de targets de entrenamiento
+# Output: matriz W de pesos
 def fullyConnectedLineal_QR(X, Y, metodo='GS'):
     #X, Y = reducir_matrices_testeo(X, Y)
     
@@ -1525,17 +1542,25 @@ def fullyConnectedLineal_QR(X, Y, metodo='GS'):
     W = pinvHouseHolder(Q, R, Y)
     return W
 
+
+# ! Da igual el metodo utilizado, dado a que se la pasa la Q,R ya factorizada
+# Input: Q,R matrices de la descomposicion QR de Xt, Y matriz de targets de entrenamiento
+# Output: W matriz de pesos
 def pinvHouseHolder(Q, R, Y):    
     V_t = res_tri_mat(R, traspuesta(Q))
     V = traspuesta(V_t)
     W = productoMatricial(Y, V)
     return W
 
+# ! Da igual el metodo utilizado, dado a que se la pasa la Q,R ya factorizada
+# Input: Q,R matrices de la descomposicion QR de Xt, Y matriz de targets de entrenamiento
+# Output: W matriz de pesos
 def pinvGramSchmidt(Q, R, Y):
     return pinvHouseHolder(Q, R, Y)
 
 # endregion
-
+# Input: Dado una matriz X, pX pseudo inversa de X y una toleracia tol
+# Output: True si pX es pseudo inversa de X, False en caso contrario
 def esPseudoInversa(X,pX,tol=1e-8):
     # Con Moore Penrose
     X_pX = productoMatricial(X,pX)
@@ -1558,14 +1583,7 @@ def esPseudoInversa(X,pX,tol=1e-8):
 # endregion
 
 def main():
-    # testsLabo()
-    X_t, Y_t, X_v, Y_v = cargarDataset(path_base)
-    W_QR = fullyConnectedLineal_QR(X_t, Y_t)
-    #print(f"W_QR: {W_QR}")
-    #W_SVD = fullyConnectedLineal_SVD(X_t, Y_t)
-    #print(f"W_SVD:{W_SVD}")
-    #W_Cholesky = fullyConnectedLineal_Cholesky(X_t, Y_t)
-    #print(f"W_Cholesky: {W_Cholesky}")
+    # Esta seccion la utilizamos para debugging
     return 
 
 if __name__ == "__main__":
