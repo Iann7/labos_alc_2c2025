@@ -1429,7 +1429,7 @@ def cargarDataset(carpeta):
 # Input: X matriz de embeddings, L la matriz de Cholesky y Y matriz de targets de entrenamiento
 # Output: W matriz de pesos
 def fullyConnectedLineal_Cholesky(X, Y):
-    X, Y = reducir_matrices_testeo(X, Y)
+    #X, Y = reducir_matrices_testeo(X, Y)
     filas,columnas = X.shape
     Xt = traspuesta(X)
     W = None
@@ -1519,7 +1519,7 @@ def pinSVD(U,S,V,Y):
 # region Algoritmo 3
 
 def fullyConnectedLineal_QR(X, Y, metodo='GS'):
-    X, Y = reducir_matrices_testeo(X, Y)
+    #X, Y = reducir_matrices_testeo(X, Y)
     
     Q, R = QR_reducida(traspuesta(X), metodo)
     W = pinvHouseHolder(Q, R, Y)
