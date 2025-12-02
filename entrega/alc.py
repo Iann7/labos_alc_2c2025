@@ -1516,13 +1516,15 @@ def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
     X, Y = reducir_matrices_testeo(X, Y)
     n,_ = X.shape
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
-    return pinvSVD(U_de_x, Sigma_de_x, V_de_x,Y)
+    
+    return pinvSVD(U_de_x, list_to_diag(Sigma_de_x), V_de_x,Y)
 
 # Input: U,S,V matrices de la descomposicion SVD de X, Y matriz de targets de entrenamiento
 # Output: W matriz de pesos
 def pinvSVD(U:np.ndarray,S:np.ndarray,V:np.ndarray,Y:np.ndarray):
     Ur, Sr, Vr = reducirSVD(U, S, V)
     Ur_traspuesta = traspuesta(Ur)
+    #FIXME: esto no va a funcionar
     Sr_inversa = list_to_diag(1.0 / Sr)  
     X_inversa = productoMatricial(productoMatricial(Vr,Sr_inversa),Ur_traspuesta)
     return productoMatricial(Y,X_inversa)
@@ -1530,6 +1532,8 @@ def pinvSVD(U:np.ndarray,S:np.ndarray,V:np.ndarray,Y:np.ndarray):
 # Asumimos que S tiene algun valor singular no nulo
 def reducirSVD(U:np.ndarray, S:np.ndarray, V:np.ndarray, atol=1e08):
     cantidad_de_rs = 0
+    # if S es una matriz entonces list_to_diag
+    print(S.shape)
     n = min(S.shape[0], S.shape[1])
     for i in range(n):
         if allclose(0, S[i,i], atol):
