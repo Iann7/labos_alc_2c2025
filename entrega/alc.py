@@ -512,7 +512,7 @@ def QR_con_HH(A,tol=1e-12):
         if norma2 <= tol:
             continue
         e_1 = np.zeros(m - k)
-        e_1[0] = 1
+        e_1[0] = norma2
         H_k = householder(x, e_1)
         H_k_ = expandirMatriz(H_k, 1, k)
         R = productoMatricial(H_k_, R)
@@ -1379,13 +1379,40 @@ def reducir_matrices_testeo(X, Y):
         
     return X,Y
 
+# Input: Matriz diagonal D
+# Output: Inversa de la matriz diagonal D. None si no es inversible (Si la matriz tiene numeros != 0 fuera de la diagonal, se asumen 0)
+def invertirDiagonal(D):
+    if not esCuadrada(D):
+        return None
+
+    n, _ = D.shape
+    inv = np.zeros((n, n))
+
+    for i in range(n):
+        if allclose(D[i, i], 0):
+            return None
+        inv[i, i] = 1.0 / D[i, i]
+
+    return inv
+
 # Input: Se ingrea una matriz A, un metodo para descomponer en QR (HouseHolder o Gram Schmidt) y una cierta tolerancia
 # Output: Matrices Q y R de la descomposicion QR de A en su version reducida
 def QR_reducida(A, metodo='RH', tol=1e-12):
     _, cols = A.shape
     Q, R = calculaQR(A, metodo, tol)
-    # Asumimos que la cantidad de columnas es mayor a la cantidad de filas, por enunciado (1536x2000)
-    return Q[:, :cols], R[:cols,:]
+    return reducirQR(Q, R)
+
+# Asumimos que la A = QR tiene mas filas que columnas. Esto lo hacemos porque en el mismo pseudocodigo del algoritmo 3 se aclara que estamos en ese caso.
+# Tambien asumimos que A = QR tiene rango completo, ya que si no fuese asi habrian problemas para recortar con k (podriamos tener menos columnas/filas)
+def reducirQR(Q, R):
+    m, n = R.shape
+    
+    k = min(m, n)
+    
+    Q_red = Q[:, :k]
+    R_red = R[:k, :]
+    
+    return Q_red, R_red
 
 # Input: vector de [0,1] o [1,0] y n cantidad de columnas
 # Output: Matriz Y con el vector repetido n veces como columnas
@@ -1516,7 +1543,6 @@ def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
     X, Y = reducir_matrices_testeo(X, Y)
     n,_ = X.shape
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
-    
     return pinvSVD(U_de_x, list_to_diag(Sigma_de_x), V_de_x,Y)
 
 # Input: U,S,V matrices de la descomposicion SVD de X, Y matriz de targets de entrenamiento
@@ -1524,15 +1550,13 @@ def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
 def pinvSVD(U:np.ndarray,S:np.ndarray,V:np.ndarray,Y:np.ndarray):
     Ur, Sr, Vr = reducirSVD(U, S, V)
     Ur_traspuesta = traspuesta(Ur)
-    #FIXME: esto no va a funcionar
-    Sr_inversa = list_to_diag(1.0 / Sr)  
+    Sr_inversa = invertirDiagonal(Sr)
     X_inversa = productoMatricial(productoMatricial(Vr,Sr_inversa),Ur_traspuesta)
     return productoMatricial(Y,X_inversa)
 
 # Asumimos que S tiene algun valor singular no nulo
 def reducirSVD(U:np.ndarray, S:np.ndarray, V:np.ndarray, atol=1e08):
     cantidad_de_rs = 0
-    # if S es una matriz entonces list_to_diag
     print(S.shape)
     n = min(S.shape[0], S.shape[1])
     for i in range(n):
@@ -1560,7 +1584,8 @@ def fullyConnectedLineal_QR(X:np.ndarray, Y:np.ndarray, metodo='GS'):
 # Input: Q,R matrices de la descomposicion QR de Xt, Y matriz de targets de entrenamiento
 # Output: W matriz de pesos
 def pinvHouseHolder(Q:np.ndarray, R:np.ndarray, Y:np.ndarray):    
-    V_t = res_tri_mat(R, traspuesta(Q))
+    Qr, Rr = reducirQR(Q, R)
+    V_t = res_tri_mat(Rr, traspuesta(Qr), inferior=False)
     V = traspuesta(V_t)
     W = productoMatricial(Y, V)
     return W
