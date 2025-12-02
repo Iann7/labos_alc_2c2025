@@ -1551,18 +1551,26 @@ def pinvSVD(U:np.ndarray,S:np.ndarray,V:np.ndarray,Y:np.ndarray):
     Ur, Sr, Vr = reducirSVD(U, S, V)
     Ur_traspuesta = traspuesta(Ur)
     Sr_inversa = invertirDiagonal(Sr)
-    X_inversa = productoMatricial(productoMatricial(Vr,Sr_inversa),Ur_traspuesta)
-    return productoMatricial(Y,X_inversa)
+    print(f"Vr {Vr.shape}")
+    print(f"Sr_inversa {Sr_inversa.shape}")
+    VrSr = productoMatricial(Vr,Sr_inversa)
+    print(f"VrSr {VrSr.shape}")
+    print(f"UrT {Ur_traspuesta.shape}")
+    X_inversa = productoMatricial(VrSr, Ur_traspuesta)
+    return productoMatricial(Y, X_inversa)
 
 # Asumimos que S tiene algun valor singular no nulo
-def reducirSVD(U:np.ndarray, S:np.ndarray, V:np.ndarray, atol=1e08):
+def reducirSVD(U:np.ndarray, S:np.ndarray, V:np.ndarray, atol=1e-10):
     cantidad_de_rs = 0
     print(S.shape)
     n = min(S.shape[0], S.shape[1])
     for i in range(n):
+        # print(f"S[{i}] = {S[i, i]}")
         if allclose(0, S[i,i], atol):
             break
         cantidad_de_rs += 1
+
+    print(f"Cantidad de rs: {cantidad_de_rs}")
 
     return U[:, :cantidad_de_rs], S[:cantidad_de_rs, :cantidad_de_rs], V[:cantidad_de_rs, :] 
 
