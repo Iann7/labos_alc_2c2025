@@ -31,25 +31,25 @@ def esSimetrica(A, tol=0):
     return True
 
 def calcularAx(A, x):
-    n, m = A.shape
-    b = np.zeros(n)
-    
-    for i in range(n):
-        for j in range(m):
-            b[i] += A[i][j] * x[j]
-
-    return b
+    #n, m = A.shape
+    #b = np.zeros(n)
+    #
+    #for i in range(n):
+    #    for j in range(m):
+    #        b[i] += A[i][j] * x[j]
+    return A @ x 
 
 def productoEscalar(u, v):
-    u = np.array(u)
-    v = np.array(v)
-    n = u.shape[0]
-    if n != v.shape[0]:
-        return None
-    suma = 0
-    for i in range(n):
-        suma += u[i] * v[i]
-    return suma
+    #u = np.array(u)
+    #v = np.array(v)
+    #n = u.shape[0]
+    #if n != v.shape[0]:
+    #    return None
+    #suma = 0
+    #for i in range(n):
+    #    suma += u[i] * v[i]
+    # Como nos dijo el corrector, usaremos las funciones de numpy para ahorrar tiempo
+    return np.dot(np.array(u),np.array(v))
 
 def determinanteTriangular(D):
     # Asumimos que la matriz es triangular
@@ -153,17 +153,17 @@ def sumarConIdentidad(A):
     return Ac
 
 def productoMatricial(A, B):
-    A_n, A_m = A.shape
-    B_n, B_m = B.shape
-    assert A_m == B_n, "ERROR LAS DIMENSIONES NO MATCHEAN" 
-    res = np.zeros((A_n, B_m))
-    for i in range(A_n):
-        for j in range(B_m):
-            row_A = A[i]
-            col_B = B[:, j]
-            res[i, j] = productoEscalar(row_A, col_B)
-
-    return res
+    #A_n, A_m = A.shape
+    #B_n, B_m = B.shape
+    #assert A_m == B_n, "ERROR LAS DIMENSIONES NO MATCHEAN" 
+    #res = np.zeros((A_n, B_m))
+    #for i in range(A_n):
+    #    for j in range(B_m):
+    #        row_A = A[i]
+    #        col_B = B[:, j]
+    #        res[i, j] = productoEscalar(row_A, col_B)
+    # Como nos dijo el corrector,usamos numpy para ahorrar tiempo
+    return A @ B 
         
 def matriz(v):
     if len(v.shape) > 1:
@@ -331,7 +331,7 @@ def calculaLU(A):
             cant_op += 1
             for j in range(k+1, n):
                 Ac[i,j] = Ac[i,j] - m_i*Ac[k,j]
-                cant_op += 2
+                cant_op += 2    
             Ac[i,k] = m_i 
             
     L = obtenerL(Ac)
@@ -1437,31 +1437,21 @@ def cargarDataset(carpeta):
 
 # Input: X matriz de embeddings, L la matriz de Cholesky y Y matriz de targets de entrenamiento
 # Output: W matriz de pesos
-def fullyConnectedLineal_Cholesky(X, Y):
+def fullyConnectedLineal_Cholesky(X:np.ndarray, Y:np.ndarray):
     #X, Y = reducir_matrices_testeo(X, Y)
-    filas,columnas = X.shape
+    cant_filas_X,cant_columnas_X = X.shape
     Xt = traspuesta(X)
     W = None
     # No calculamos el rango porque asumimos que X es de rango completo por precondicion
-
-    if filas>columnas:
-        Xt_X = productoMatricial(Xt, X)
-        L = calculaCholesky(Xt_X)
+    if cant_filas_X>=cant_columnas_X:
+        Xt_X_con_cholesky = productoMatricial(Xt, X)
+        L = calculaCholesky(Xt_X_con_cholesky)
         W = pinvEcuacionesNormales(X, L, Y)
 
-    elif filas<columnas:
+    elif cant_filas_X<cant_columnas_X:
         X_Xt = productoMatricial(X, Xt)
         L = calculaCholesky(X_Xt)
         W = pinvEcuacionesNormales(X, L, Y)
-
-    elif filas==columnas:
-        # W * X = Y
-        # W = Y * X_inv
-        X_inv = inversa(X) 
-        # Sabemos que tiene inversa porque es cuadrada y de rango completo
-        # Si una matriz inversible, entonces tiene LU
-
-        W = productoMatricial(Y, X_inv)
 
     return W
 
@@ -1470,7 +1460,14 @@ def fullyConnectedLineal_Cholesky(X, Y):
 def pinvEcuacionesNormales(X, L, Y):
     filas, columnas = X.shape
     W = None
-    if filas > columnas:
+    if filas >= columnas:
+        # Caso filas == columnas vale el caso a) por lo siguiente:
+        # X+ = (Xt * X)^-1 * Xt
+        # X+ = X^-1 * Xt^-1 * Xt
+        # X+ = X^-1 * I
+        # X+ = X^-1
+        # Entonces WX = Y es lo mismo que W = Y(X^-1) = YU
+
         # L = Cholesky(Xt * X)
         # L * Lt * U = Xt
         # Resolvemos para U:
@@ -1501,7 +1498,7 @@ def pinvEcuacionesNormales(X, L, Y):
         A = res_tri_mat(L, X)
 
         # Lt * Vt = A
-        Vt = res_tri_mat(traspuesta(L), A)
+        Vt = res_tri_mat(traspuesta(L), A, inferior=False)
 
         V = traspuesta(Vt)
         W = productoMatricial(Y, V)
@@ -1519,15 +1516,27 @@ def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
     X, Y = reducir_matrices_testeo(X, Y)
     n,_ = X.shape
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
-    return pinSVD(U_de_x, Sigma_de_x, V_de_x,Y)
+    return pinvSVD(U_de_x, Sigma_de_x, V_de_x,Y)
 
 # Input: U,S,V matrices de la descomposicion SVD de X, Y matriz de targets de entrenamiento
 # Output: W matriz de pesos
-def pinSVD(U,S,V,Y):
-    U_traspuesta = traspuesta(U)
-    S_inversa = list_to_diag(1.0 / S)  
-    X_inversa = productoMatricial(productoMatricial(V,S_inversa),U_traspuesta)
+def pinvSVD(U:np.ndarray,S:np.ndarray,V:np.ndarray,Y:np.ndarray):
+    Ur, Sr, Vr = reducirSVD(U, S, V)
+    Ur_traspuesta = traspuesta(Ur)
+    Sr_inversa = list_to_diag(1.0 / Sr)  
+    X_inversa = productoMatricial(productoMatricial(Vr,Sr_inversa),Ur_traspuesta)
     return productoMatricial(Y,X_inversa)
+
+# Asumimos que S tiene algun valor singular no nulo
+def reducirSVD(U:np.ndarray, S:np.ndarray, V:np.ndarray, atol=1e08):
+    cantidad_de_rs = 0
+    n = min(S.shape[0], S.shape[1])
+    for i in range(n):
+        if allclose(0, S[i,i], atol):
+            break
+        cantidad_de_rs += 1
+
+    return U[:, :cantidad_de_rs], S[:cantidad_de_rs, :cantidad_de_rs], V[:cantidad_de_rs, :] 
 
 # endregion
 
@@ -1535,7 +1544,7 @@ def pinSVD(U,S,V,Y):
 
 # Input: X matriz de embeddings, L la matriz de Cholesky y Y matriz de targets de entrenamiento
 # Output: matriz W de pesos
-def fullyConnectedLineal_QR(X, Y, metodo='GS'):
+def fullyConnectedLineal_QR(X:np.ndarray, Y:np.ndarray, metodo='GS'):
     #X, Y = reducir_matrices_testeo(X, Y)
     
     Q, R = QR_reducida(traspuesta(X), metodo)
@@ -1546,7 +1555,7 @@ def fullyConnectedLineal_QR(X, Y, metodo='GS'):
 # ! Da igual el metodo utilizado, dado a que se la pasa la Q,R ya factorizada
 # Input: Q,R matrices de la descomposicion QR de Xt, Y matriz de targets de entrenamiento
 # Output: W matriz de pesos
-def pinvHouseHolder(Q, R, Y):    
+def pinvHouseHolder(Q:np.ndarray, R:np.ndarray, Y:np.ndarray):    
     V_t = res_tri_mat(R, traspuesta(Q))
     V = traspuesta(V_t)
     W = productoMatricial(Y, V)
