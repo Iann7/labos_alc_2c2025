@@ -1343,6 +1343,13 @@ def testsLabo():
 # Input: Triang matriz triangular (superior o inferior), b vector de terminos independientes, inferior booleano que indica si la matriz es inferior
 # Output: X solucion del sistema triangular
 def res_tri_mat(Triang, Y, inferior=True):
+    """
+    Docstring for res_tri_mat
+    
+    :param Triang: Description
+    :param Y: Description
+    :param inferior: Description
+    """
     X_cols = [] 
     Y_cols_count = Y.shape[1]
     for i in range(Y_cols_count):
@@ -1407,7 +1414,7 @@ def QR_reducida(A, metodo='RH', tol=1e-12):
 def reducirQR(Q, R):
     m, n = R.shape
     
-    k = min(m, n)
+    k = n
     
     Q_red = Q[:, :k]
     R_red = R[:k, :]
@@ -1548,6 +1555,7 @@ def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
 # Input: U,S,V matrices de la descomposicion SVD de X, Y matriz de targets de entrenamiento
 # Output: W matriz de pesos
 def pinvSVD(U:np.ndarray,S:np.ndarray,V:np.ndarray,Y:np.ndarray):
+    #TODO: if es array o matriz
     Ur, Sr, Vr = reducirSVD(U, S, V)
     Ur_traspuesta = traspuesta(Ur)
     Sr_inversa = invertirDiagonal(Sr)
