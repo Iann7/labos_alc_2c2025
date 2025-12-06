@@ -58,9 +58,9 @@ def calcularYPlotearMatrizDeConfusion(X_t, Y_t, X_v, Y_v, metodo="Cholesky"):
     
     print(f"FINALIZO {metodo}")
     matrizConfusion = armarMatrizDeConfusion(W, X_v, Y_v)
-    print(f"Hitrate gato {matrizConfusion[0][0]/(matrizConfusion[0][0]+matrizConfusion[0][1])} siendo {matrizConfusion[0][0]} de {matrizConfusion[0][0]+matrizConfusion[0][1]} gatos correctamente clasificados")
-    print(f"Hitrate perro {matrizConfusion[1][1]/(matrizConfusion[1][0]+matrizConfusion[1][1])} siendo {matrizConfusion[1][1]} de {matrizConfusion[1][0]+matrizConfusion[1][1]} perros correctamente clasificados")
-    print(f"Hitrate total {(matrizConfusion[0][0]+matrizConfusion[1][1])/(matrizConfusion[0][0]+matrizConfusion[0][1]+matrizConfusion[1][0]+matrizConfusion[1][1])}")
+    print(f"Accuracy gato {matrizConfusion[0][0]/(matrizConfusion[0][0]+matrizConfusion[0][1])} siendo {matrizConfusion[0][0]} de {matrizConfusion[0][0]+matrizConfusion[0][1]} gatos correctamente clasificados")
+    print(f"Accuracy perro {matrizConfusion[1][1]/(matrizConfusion[1][0]+matrizConfusion[1][1])} siendo {matrizConfusion[1][1]} de {matrizConfusion[1][0]+matrizConfusion[1][1]} perros correctamente clasificados")
+    print(f"Accuracy total {(matrizConfusion[0][0]+matrizConfusion[1][1])/(matrizConfusion[0][0]+matrizConfusion[0][1]+matrizConfusion[1][0]+matrizConfusion[1][1])}")
     
     plot_confusion_matrix(matrizConfusion, f"Matriz de Confusión - {metodo}")
     return 

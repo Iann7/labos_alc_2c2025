@@ -573,29 +573,55 @@ def metpot2k(A,tol=1e-8,K=100):
     return v_, autovalor, k
 
 
-def diagRH(A,tol=1e-15,K=1000):
-    # Forzamos que sea simetrica
+# def diagRH(A,tol=1e-15,K=1000):
+#     # Forzamos que sea simetrica
+#     A = (A + traspuesta(A)) / 2
+#     # No checkeamos que sea simetrica para evitar costo de operaciones en el TP
+#     # y para evitar arrastrar errores de precision al hacer tantas cuentas
+#     # if not esSimetrica(A, 100*tol):
+#     #     print("FALLO POR NO SIMETRICA")
+#     #     return None
+#     n, _ = A.shape
+#     v_1, val_1, _ = metpot2k(A, tol, K)
+#     e_1 = np.zeros(n)
+#     e_1[0] = 1
+#     H_v_1 = householder(e_1, v_1)
+#     if n == 2:
+#         S = H_v_1
+#         D = productoMatricial(H_v_1, productoMatricial(A, traspuesta(H_v_1)))
+#     else:
+#         B = productoMatricial(H_v_1, productoMatricial(A, traspuesta(H_v_1)))
+#         A_ = B[1:n, 1:n]
+#         S_, D_ = diagRH(A_, tol, K)
+#         D = expandirMatriz(D_, val_1)
+#         S = productoMatricial(H_v_1, expandirMatriz(S_, 1))
+#     return S, D
+
+# diagRH en su version iterativa
+def diagRH(A, tol=1e-15, K=1000):
     A = (A + traspuesta(A)) / 2
-    # No checkeamos que sea simetrica para evitar costo de operaciones en el TP
-    # y para evitar arrastrar errores de precision al hacer tantas cuentas
-    # if not esSimetrica(A, 100*tol):
-    #     print("FALLO POR NO SIMETRICA")
-    #     return None
-    n, _ = A.shape
-    v_1, val_1, _ = metpot2k(A, tol, K)
-    e_1 = np.zeros(n)
-    e_1[0] = 1
-    H_v_1 = householder(e_1, v_1)
-    if n == 2:
-        S = H_v_1
-        D = productoMatricial(H_v_1, productoMatricial(A, traspuesta(H_v_1)))
-    else:
-        B = productoMatricial(H_v_1, productoMatricial(A, traspuesta(H_v_1)))
-        A_ = B[1:n, 1:n]
-        S_, D_ = diagRH(A_, tol, K)
-        D = expandirMatriz(D_, val_1)
-        S = productoMatricial(H_v_1, expandirMatriz(S_, 1))
-    return S, D
+    n = A.shape[0]
+    S = A.copy()
+    D = np.eye(n)
+
+    for i in range(n - 1):
+        sub_S = S[i:, i:]
+        
+        v, _, _ = metpot2k(sub_S, tol, K)
+        
+        e1 = np.zeros(sub_S.shape[0])
+        e1[0] = 1
+        H_sub = householder(e1, v) 
+        
+        paso1 = productoMatricial(sub_S, traspuesta(H_sub))
+        sub_S_2 = productoMatricial(H_sub, paso1)
+        
+        S[i:, i:] = sub_S_2
+        
+        D_sub = D[:, i:]
+        D[:, i:] = productoMatricial(D_sub, H_sub)
+
+    return D, S
 
 # endregion
 
@@ -719,28 +745,67 @@ def calcular_sigma_casita(A,tol):
             break
     return sigma_casita
 
-def svd_reducida(A,k="max",tol=1e-15):
+# def svd_reducida(A,k="max",tol=1e-15):
+#     """
+#     A la matriz de interes (de m x n)
+#     k el numero de valores singulares (y vectores) a retener.
+#     tol la tolerancia para considerar un valor singular igual a cero
+#     Retorna hatU (matriz de m x k), hatSig (vector de k valores singulares) y hatV (matriz de n x k)
+#     """
+#     filas_a,columnas_a= A.shape
+#     a_t_a = productoMatricial(traspuesta(A),A)
+#     # Nos aseguramos de que sea simetrica con este (M + Mt) / 2
+#     a_t_a = (a_t_a + traspuesta(a_t_a)) / 2
+#     V,diagonal_autovalores_de_ata = diagRH(a_t_a,tol)
+#     Sigma_casita_diagonal = calcular_sigma_casita(diagonal_autovalores_de_ata , tol)
+#     r=len(Sigma_casita_diagonal)
+#     V_casita = V[:,:r]
+#     B = productoMatricial(A, V_casita)  
+#     U_t_norm = np.array(normaliza(traspuesta(B),p=2))
+#     U_casita = traspuesta(U_t_norm)
+#     if k == "max":
+#         k = r
+    
+#     return  U_casita[:,:k],np.array(Sigma_casita_diagonal)[:k],V_casita[:,:k]
+
+def svd_reducida(A, k="max", tol=1e-15):
     """
     A la matriz de interes (de m x n)
     k el numero de valores singulares (y vectores) a retener.
     tol la tolerancia para considerar un valor singular igual a cero
     Retorna hatU (matriz de m x k), hatSig (vector de k valores singulares) y hatV (matriz de n x k)
     """
-    filas_a,columnas_a= A.shape
-    a_t_a = productoMatricial(traspuesta(A),A)
-    # Nos aseguramos de que sea simetrica con este (M + Mt) / 2
-    a_t_a = (a_t_a + traspuesta(a_t_a)) / 2
-    V,diagonal_autovalores_de_ata = diagRH(a_t_a,tol)
-    Sigma_casita_diagonal = calcular_sigma_casita(diagonal_autovalores_de_ata , tol)
-    r=len(Sigma_casita_diagonal)
-    V_casita = V[:,:r]
-    B = productoMatricial(A, V_casita)  
-    U_t_norm = np.array(normaliza(traspuesta(B),p=2))
-    U_casita = traspuesta(U_t_norm)
+    filas_a, columnas_a = A.shape
+    
+    if filas_a < columnas_a:
+        gram = productoMatricial(A, traspuesta(A))
+        calculamos_V_primero = False
+    else:
+        gram = productoMatricial(traspuesta(A), A)
+        calculamos_V_primero = True
+
+    gram = (gram + traspuesta(gram)) / 2 # Nos aseguramos de que sea simetrica
+    Vectors, diagonal_autovalores = diagRH(gram, tol)
+    Sigma_casita_diagonal = calcular_sigma_casita(diagonal_autovalores, tol)
+    r = len(Sigma_casita_diagonal)
+    
+    Vectors_casita = Vectors[:, :r]
+
+    if calculamos_V_primero:
+        V_casita = Vectors_casita
+        B = productoMatricial(A, V_casita)
+        U_t_norm = np.array(normaliza(traspuesta(B), p=2))
+        U_casita = traspuesta(U_t_norm)
+    else:
+        U_casita = Vectors_casita
+        B = productoMatricial(traspuesta(A), U_casita)
+        V_t_norm = np.array(normaliza(traspuesta(B), p=2))
+        V_casita = traspuesta(V_t_norm)
+
     if k == "max":
         k = r
-    
-    return  U_casita[:,:k],np.array(Sigma_casita_diagonal)[:k],V_casita[:,:k]
+
+    return U_casita[:, :k], np.array(Sigma_casita_diagonal)[:k], V_casita[:, :k]
 
 
 # endregion
@@ -748,12 +813,12 @@ def svd_reducida(A,k="max",tol=1e-15):
 # region Helpers TP
 def res_tri_mat(Triang, Y, inferior=True):
     """
-    Output: 
-        X solucion del sistema triangular.
     Args:
         Triang (np.ndarray): Matriz triangular (superior o inferior).
         Y (np.ndarray): Matriz de terminos independientes.
         inferior (bool, optional): Booleano que indica si la matriz es inferior.
+    Output: 
+        X solucion del sistema triangular.
     """
     X_cols = [] 
     Y_cols_count = Y.shape[1]
@@ -764,19 +829,19 @@ def res_tri_mat(Triang, Y, inferior=True):
 
 def hermitiana(A):
     """
-    Output: 
-        Matriz hermitiana (traspuesta para matrices reales).
     Args:
         A (np.ndarray): Matriz de entrada.
+    Output: 
+        Matriz hermitiana (traspuesta para matrices reales).
     """
     return traspuesta(A) #CORRECTO PARA DATOS REALES :D 
 
 def list_to_diag(X):
     """
-    Output: 
-        Matriz diagonal con los elementos de X en la diagonal.
     Args:
         X (list/np.ndarray): Lista o vector con los elementos de la diagonal.
+    Output: 
+        Matriz diagonal con los elementos de X en la diagonal.
     """
     n = len(X)
     matriz_diagonal:np.ndarray = np.zeros((n,n))
@@ -786,12 +851,14 @@ def list_to_diag(X):
 
 def reducir_matrices_testeo(X, Y, cant=100):
     """
-    Output: 
-        Se devuelven X e Y reducidas cantidad cant de perros y cantidad cant de gatos.
+    Funcion usada solo para testeo. No se usa en el codigo final.
+
     Args:
         X (np.ndarray): Matriz de embeddings (tamaño mayor a cant).
         Y (np.ndarray): Matriz de targets (tamaño mayor a cant).
         cant (int, optional): Cantidad de perros y gatos a tener en la matriz final
+    Output: 
+        Se devuelven X e Y reducidas cantidad cant de perros y cantidad cant de gatos.
     """
     if cant > 0 : # No reducir si es menor o igual que 0
         print(f"Reduciendo matrices de entrenamiento a {cant} ejemplos por clase")
@@ -807,10 +874,10 @@ def reducir_matrices_testeo(X, Y, cant=100):
 
 def invertirDiagonal(D):
     """
-    Output: 
-        Inversa de la matriz diagonal D. None si no es inversible (Si la matriz tiene numeros != 0 fuera de la diagonal, se asumen 0).
     Args:
         D (np.ndarray): Matriz diagonal.
+    Output: 
+        Inversa de la matriz diagonal D. None si no es inversible (Si la matriz tiene numeros != 0 fuera de la diagonal, se asumen 0).
     """
     if not esCuadrada(D):
         return None
@@ -827,14 +894,13 @@ def invertirDiagonal(D):
 
 def QR_reducida(A, metodo='RH', tol=1e-12):
     """
-    Output: 
-        Matrices Q y R de la descomposicion QR de A en su version reducida.
     Args:
         A (np.ndarray): Matriz de entrada.
         metodo (str, optional): Metodo para descomponer en QR ('RH' o 'GS').
         tol (float, optional): Tolerancia.
+    Output: 
+        Matrices Q y R de la descomposicion QR de A en su version reducida.
     """
-    _, cols = A.shape
     Q, R = calculaQR(A, metodo, tol)
     return reducirQR(Q, R)
 
@@ -842,28 +908,26 @@ def reducirQR(Q, R):
     """
     Asumimos que la At = QR tiene mas columnas que filas. Esto lo hacemos porque en el mismo pseudocodigo del algoritmo 3 se aclara que estamos en ese caso.
 
-    Output: 
-        Matrices Q y R reducidas.
     Args:
         Q (np.ndarray): Matriz ortogonal Q.
         R (np.ndarray): Matriz triangular R.
+    Output: 
+        Matrices Q y R reducidas.
     """
-    m, n = R.shape
+    _, n = R.shape
     
-    k = n
-    
-    Q_red = Q[:, :k]
-    R_red = R[:k, :]
+    Q_red = Q[:, :n]
+    R_red = R[:n, :]
     
     return Q_red, R_red
 
 def generarY(vector, n):
     """
-    Output: 
-        Matriz Y con el vector repetido n veces como columnas.
     Args:
         vector (np.ndarray): Vector de [0,1] o [1,0].
         n (int): Cantidad de columnas.
+    Output: 
+        Matriz Y con el vector repetido n veces como columnas.
     """
     # checkear que valores sean 1 o 0
     cantUno = 0
@@ -888,22 +952,20 @@ def generarY(vector, n):
 # region Funciones TP
 def cargarDataset(carpeta):
     """
-    Output: 
-        Tupla con cuatro matrices (X_t, Y_t, X_v, Y_v) correspondientes a embeddings y targets de entrenamiento y validación.
     Args:
         carpeta (str): Path al directorio del dataset.
+    Output: 
+        Tupla con cuatro matrices (X_t, Y_t, X_v, Y_v) correspondientes a embeddings y targets de entrenamiento y validación.
     """
     dogs_t = np.load(carpeta + "/train/dogs/efficientnet_b3_embeddings.npy")
     cats_t = np.load(carpeta + "/train/cats/efficientnet_b3_embeddings.npy")
     dogs_v = np.load(carpeta + "/val/dogs/efficientnet_b3_embeddings.npy")
     cats_v = np.load(carpeta + "/val/cats/efficientnet_b3_embeddings.npy")
 
-
     Y_t_dogs = generarY(np.array([1,0]), dogs_t.shape[1])
     Y_t_cats = generarY(np.array([0,1]), cats_t.shape[1])
     Y_v_dogs = generarY(np.array([1,0]), dogs_v.shape[1])
     Y_v_cats = generarY(np.array([0,1]), cats_v.shape[1])
-
 
     X_t = np.column_stack((dogs_t, cats_t)) 
     Y_t = np.column_stack((Y_t_dogs, Y_t_cats))
@@ -916,13 +978,12 @@ def cargarDataset(carpeta):
 
 def fullyConnectedLineal_Cholesky(X:np.ndarray, Y:np.ndarray):
     """
-    Output: 
-        Matriz de pesos W calculada usando descomposición de Cholesky.
     Args:
         X (np.ndarray): Matriz de embeddings de entrenamiento.
         Y (np.ndarray): Matriz de targets de entrenamiento.
+    Output: 
+        Matriz de pesos W calculada usando descomposición de Cholesky.
     """
-    #X, Y = reducir_matrices_testeo(X, Y)
     cant_filas_X,cant_columnas_X = X.shape
     Xt = traspuesta(X)
     W = None
@@ -941,12 +1002,12 @@ def fullyConnectedLineal_Cholesky(X:np.ndarray, Y:np.ndarray):
 
 def pinvEcuacionesNormales(X, L, Y):
     """
-    Output: 
-        Matriz de pesos W.
     Args:
         X (np.ndarray): Matriz de embeddings.
         L (np.ndarray): Matriz triangular resultante de la descomposición de Cholesky.
         Y (np.ndarray): Matriz de targets.
+    Output: 
+        Matriz de pesos W.
     """
     filas, columnas = X.shape
     W = None
@@ -993,7 +1054,6 @@ def pinvEcuacionesNormales(X, L, Y):
         V = traspuesta(Vt)
         W = productoMatricial(Y, V)
     
-    # Asumimos que deberíamos caer en alguno de los dos casos anteriores
     return W
 
 # endregion
@@ -1002,37 +1062,32 @@ def pinvEcuacionesNormales(X, L, Y):
 
 def fullyConnectedLineal_SVD(X:np.ndarray, Y:np.ndarray):
     """
-    Output: 
-        Matriz de pesos W calculada usando descomposición SVD.
     Args:
         X (np.ndarray): Matriz de embeddings de entrenamiento.
         Y (np.ndarray): Matriz de targets de entrenamiento.
+    Output: 
+        Matriz de pesos W calculada usando descomposición SVD.
     """
-    X, Y = reducir_matrices_testeo(X, Y)
     n,_ = X.shape
     U_de_x,Sigma_de_x,V_de_x = svd_reducida(X,k=n)
     return pinvSVD(U_de_x, list_to_diag(Sigma_de_x), V_de_x,Y)
 
 def pinvSVD(U:np.ndarray,S:np.ndarray,V:np.ndarray,Y:np.ndarray):
     """
-    Output: 
-        Matriz de pesos W.
     Args:
         U (np.ndarray): Matriz U de la descomposición SVD.
         S (np.ndarray): Matriz diagonal de valores singulares.
         V (np.ndarray): Matriz V de la descomposición SVD.
         Y (np.ndarray): Matriz de targets.
+    Output: 
+        Matriz de pesos W.
     """
     if S.ndim == 1: # En caso de que S venga como una lista, armamos la matriz
         S = list_to_diag(S)
     Ur, Sr, Vr = reducirSVD(U, S, V)
     Ur_traspuesta = traspuesta(Ur)
     Sr_inversa = invertirDiagonal(Sr)
-    print(f"Vr {Vr.shape}")
-    print(f"Sr_inversa {Sr_inversa.shape}")
     VrSr = productoMatricial(Vr,Sr_inversa)
-    print(f"VrSr {VrSr.shape}")
-    print(f"UrT {Ur_traspuesta.shape}")
     X_inversa = productoMatricial(VrSr, Ur_traspuesta)
     return productoMatricial(Y, X_inversa)
 
@@ -1040,26 +1095,22 @@ def reducirSVD(U:np.ndarray, S:np.ndarray, V:np.ndarray, atol=1e-10):
     """
     Asumimos que S tiene algun valor singular no nulo
 
-    Output: 
-        Matrices U, S, V reducidas eliminando valores singulares cercanos a cero.
     Args:
         U (np.ndarray): Matriz U de la SVD.
         S (np.ndarray): Matriz S de la SVD.
         V (np.ndarray): Matriz V de la SVD.
         atol (float, optional): Tolerancia para considerar un valor singular como cero.
+    Output: 
+        Matrices U, S, V reducidas eliminando valores singulares cercanos a cero.
     """
     cantidad_de_rs = 0
-    print(S.shape)
     n = min(S.shape[0], S.shape[1])
     for i in range(n):
-        # print(f"S[{i}] = {S[i, i]}")
         if allclose(0, S[i,i], atol):
             break
         cantidad_de_rs += 1
 
-    print(f"Cantidad de rs: {cantidad_de_rs}")
-
-    return U[:, :cantidad_de_rs], S[:cantidad_de_rs, :cantidad_de_rs], V[:cantidad_de_rs, :] 
+    return U[:, :cantidad_de_rs], S[:cantidad_de_rs, :cantidad_de_rs], V[:, :cantidad_de_rs] 
 
 # endregion
 
@@ -1067,14 +1118,13 @@ def reducirSVD(U:np.ndarray, S:np.ndarray, V:np.ndarray, atol=1e-10):
 
 def fullyConnectedLineal_QR(X:np.ndarray, Y:np.ndarray, metodo='GS'):
     """
-    Output: 
-        Matriz de pesos W calculada usando descomposición QR.
     Args:
         X (np.ndarray): Matriz de embeddings de entrenamiento.
         Y (np.ndarray): Matriz de targets de entrenamiento.
         metodo (str, optional): Método para QR ('GS' o 'RH').
+    Output: 
+        Matriz de pesos W calculada usando descomposición QR.
     """
-    #X, Y = reducir_matrices_testeo(X, Y)
     Q, R = QR_reducida(traspuesta(X), metodo)
     W = pinvHouseHolder(Q, R, Y)
     return W
@@ -1084,12 +1134,12 @@ def pinvHouseHolder(Q:np.ndarray, R:np.ndarray, Y:np.ndarray):
     """
     Da igual el metodo utilizado, dado a que se la pasa la Q,R ya factorizada
 
-    Output: 
-        Matriz de pesos W.
     Args:
         Q (np.ndarray): Matriz ortogonal Q.
         R (np.ndarray): Matriz triangular superior R.
         Y (np.ndarray): Matriz de targets.
+    Output: 
+        Matriz de pesos W.
     """
     Qr, Rr = reducirQR(Q, R)
     V_t = res_tri_mat(Rr, traspuesta(Qr), inferior=False)
@@ -1101,12 +1151,12 @@ def pinvGramSchmidt(Q, R, Y):
     """
     Da igual el metodo utilizado, dado a que se la pasa la Q,R ya factorizada
 
-    Output: 
-        Matriz de pesos W.
     Args:
         Q (np.ndarray): Matriz ortogonal Q.
         R (np.ndarray): Matriz triangular superior R.
         Y (np.ndarray): Matriz de targets.
+    Output: 
+        Matriz de pesos W.
     """
     return pinvHouseHolder(Q, R, Y)
 
@@ -1114,12 +1164,12 @@ def pinvGramSchmidt(Q, R, Y):
 
 def esPseudoInversa(X,pX,tol=1e-8):
     """
-    Output: 
-        Booleano indicando si pX es efectivamente la pseudo-inversa de Moore-Penrose de X.
     Args:
         X (np.ndarray): Matriz original.
         pX (np.ndarray): Matriz candidata a pseudo-inversa.
         tol (float, optional): Tolerancia para las comparaciones numéricas.
+    Output: 
+        Booleano indicando si pX es efectivamente la pseudo-inversa de Moore-Penrose de X.
     """
     # Con Moore Penrose
     X_pX = productoMatricial(X,pX)
